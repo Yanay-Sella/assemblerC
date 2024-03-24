@@ -1,0 +1,2 @@
+#define MAX_LINE_LENGTH 256
+#define MAX_MACROS 100
