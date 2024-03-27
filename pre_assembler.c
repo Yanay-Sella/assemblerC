@@ -25,8 +25,20 @@ void free_macros(void) {
     }
 }
 
-void replace_macros(char* line) {
-    
+void replace_macros(char *line, FILE *output_file) {
+    int i, j;
+    for (i = 0; i < num_macros; i++) {
+        if (strncmp(line, macros[i].name, strlen(macros[i].name)) == 0) {
+            /* this line is a call to a macro, so write the macro's definition to the output file */
+            for (j = 0; j < macros[i].num_lines; j++) {
+                fprintf(output_file, "%s\n", macros[i].lines[j]);
+            }
+            return;
+        }
+    }
+
+    /* this line is not a call to a macro, so write it to the output file */
+    fprintf(output_file, "%s\n", line);
 }
 
 void expand_macros(FILE *input_file, FILE *output_file) {
@@ -55,11 +67,8 @@ void expand_macros(FILE *input_file, FILE *output_file) {
             /* our new macro points to the num_macro element in the array */
             current_macro = &macros[num_macros++];
 
-            if (sscanf(line, "%3s %s", macro_keyword, current_macro->name) == 2) {
-                if(strcmp(macro_keyword, "mcr") == 0){
-                    /* this is a macro defenition */
-                }
-            }
+            sscanf(line, "%3s %s", macro_keyword, current_macro->name);
+            
             current_macro->num_lines = 0;
         /* check the first 6 character for macro end */
         } else if (strncmp(line, "endmcr", 6) == 0) {
@@ -69,14 +78,16 @@ void expand_macros(FILE *input_file, FILE *output_file) {
         
         /* check if inside the macro */
         } else if (in_macro == 1) {
+            /* reallocate memory in the -array- for a new line */
+            current_macro->lines = realloc(current_macro->lines, (current_macro->num_lines + 1) * sizeof(char *));
+            
             /* add the line to the current macro that point to the array */
             /* strdup also allocates memory which should be freed */
             current_macro->lines[current_macro->num_lines++] = strdup(line);
         } else {
             /* replace any macros in the line */
-            replace_macros(line);
+            replace_macros(line, output_file);
             /* write the processed line to the output file */
-            fprintf(output_file, "%s\n", line);
         }
     }
 }
