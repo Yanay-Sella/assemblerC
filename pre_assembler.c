@@ -25,9 +25,26 @@ void free_macros(void) {
     }
 }
 
+/* this function removes any leading and trailing whitespace in a string */
+void trim_whitespace(char *str) {
+    char *start = str;
+    char *end = start + strlen(start) - 1;
+
+    while (*start == ' ' || *start == '\t') {
+        start++;
+    }
+    while (end > start && (*end == ' ' || *end == '\t' || *end == '\n')) {
+        *end = '\0';
+        end--;
+    }
+    memmove(str, start, end - start + 2); /* +2 to include the null terminator */
+}
+
 void replace_macros(char *line, FILE *output_file) {
     int i, j;
     for (i = 0; i < num_macros; i++) {
+        printf("line: %s \n", line);
+        printf("macro.name: %s \n", macros[i].name);
         if (strncmp(line, macros[i].name, strlen(macros[i].name)) == 0) {
             /* this line is a call to a macro, so write the macro's definition to the output file */
             for (j = 0; j < macros[i].num_lines; j++) {
@@ -55,7 +72,7 @@ void expand_macros(FILE *input_file, FILE *output_file) {
     /* read each line from the input file */
     while (fgets(line, sizeof(line), input_file) != NULL) {
         char macro_keyword[4];
-
+        trim_whitespace(line);
         /* remove new line charaters */
         line[strcspn(line, "\n")] = '\0';
 
@@ -85,9 +102,8 @@ void expand_macros(FILE *input_file, FILE *output_file) {
             /* strdup also allocates memory which should be freed */
             current_macro->lines[current_macro->num_lines++] = strdup(line);
         } else {
-            /* replace any macros in the line */
+            /* replace the macros or write original line */
             replace_macros(line, output_file);
-            /* write the processed line to the output file */
         }
     }
 }
