@@ -5,12 +5,19 @@
 #include "pre_assembler.h"
 #include "global.h"
 
+typedef struct {
+    char symbolname[80];
+    char identifier[80]; 
+    int value;
+} Symbol;
+
 int main(int argc, char *argv[]) {
     FILE *input_file;
     FILE *output_file;
     char *input_filename;
     char *output_filename;
     char *copy_input_filename = strdup(argv[1]);
+    Symbol symbolTable[4096]; 
 
     if (argc != 2) {
         printf("Usage: %s input_file.as\n", argv[0]);
@@ -47,6 +54,8 @@ int main(int argc, char *argv[]) {
 
     /* Expand macros in the input file and write the result to the output file */
     expand_macros(input_file, output_file);
+
+
 
     /* close files */
     fclose(input_file);

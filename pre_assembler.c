@@ -15,13 +15,16 @@ typedef struct Macro {
 Macro macros[MAX_MACROS];
 int num_macros = 0;
 
+/* a function to free all macros from the macro array */
 void free_macros(void) {
     int i,j;
     for (i = 0; i < num_macros; i++) {
         for (j = 0; j < macros[i].num_lines; j++) {
-            free(macros[i].lines[j]);
+            free(macros[i].lines[j]); /* free the lines themsleves */
         }
-        free(macros[i].name);
+        free(macros[i].lines); /* free the lines of the array */
+        /* TODO: check if I need this in case using a pointer in memory */
+        /* free(macros[i].name); */
     }
 }
 
@@ -53,9 +56,12 @@ void replace_macros(char *line, FILE *output_file) {
             return;
         }
     }
-
     /* this line is not a call to a macro, so write it to the output file */
-    fprintf(output_file, "%s\n", line);
+    /* and also check for validity */
+    if (fprintf(output_file, "%s\n", line) < 0) {
+        fprintf(stderr, "ERROR: write to output file failed\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void expand_macros(FILE *input_file, FILE *output_file) {
@@ -96,8 +102,12 @@ void expand_macros(FILE *input_file, FILE *output_file) {
         /* check if inside the macro */
         } else if (in_macro == 1) {
             /* reallocate memory in the -array- for a new line */
-            current_macro->lines = realloc(current_macro->lines, (current_macro->num_lines + 1) * sizeof(char *));
-            
+            char **new_lines = realloc(current_macro->lines, (current_macro->num_lines + 1) * sizeof(char *));
+            if (new_lines == NULL) {
+                printf("ERROR: memory allocation failed\n");
+                exit(EXIT_FAILURE);
+            }
+            current_macro->lines = new_lines;            
             /* add the line to the current macro that point to the array */
             /* strdup also allocates memory which should be freed */
             current_macro->lines[current_macro->num_lines++] = strdup(line);
