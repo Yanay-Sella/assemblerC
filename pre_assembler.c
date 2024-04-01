@@ -23,6 +23,7 @@ void free_macros(void) {
             free(macros[i].lines[j]); /* free the lines themsleves */
         }
         free(macros[i].lines); /* free the lines of the array */
+
         /* TODO: check if I need this in case using a pointer in memory */
         /* free(macros[i].name); */
     }
@@ -56,7 +57,7 @@ void replace_macros(char *line, FILE *output_file) {
             return;
         }
     }
-    /* this line is not a call to a macro, so write it to the output file */
+    /* this line is not a call to a macro, so write we it to the output file */
     /* and also check for validity */
     if (fprintf(output_file, "%s\n", line) < 0) {
         fprintf(stderr, "ERROR: write to output file failed\n");

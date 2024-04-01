@@ -17,7 +17,11 @@ int main(int argc, char *argv[]) {
     char *input_filename;
     char *output_filename;
     char *copy_input_filename = strdup(argv[1]);
-    Symbol symbolTable[4096]; 
+    Symbol symbolTable[4096];
+
+    /* allocating memory for data array and initializng currentSize to its size */
+    dataArray = (int*) malloc(80 * sizeof(int));
+    currentSize = 80;
 
     if (argc != 2) {
         printf("Usage: %s input_file.as\n", argv[0]);
@@ -55,7 +59,7 @@ int main(int argc, char *argv[]) {
     /* Expand macros in the input file and write the result to the output file */
     expand_macros(input_file, output_file);
 
-
+    free(dataArray);
 
     /* close files */
     fclose(input_file);
