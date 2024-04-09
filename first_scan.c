@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "first_scan.h"
 #include "global.h"
 
 int dataCount = 0;
@@ -23,13 +24,14 @@ int findMDefine(char* symbolName) {
 /* add data to the dataArray */
 void addData(int value) {
     /* check if dataArray is full and reallocate more memory if needed */
-    if (dataCount >= currentSize) {
+    if (dataCount >= dataArraySize) {
         /* double the size */
-        currentSize *= 2;
-        dataArray = (int*) realloc(dataArray, currentSize * sizeof(int));
+        dataArraySize *= 2;
+        dataArray = (int*) realloc(dataArray, dataArraySize * sizeof(int));
     }
 
-    /* add the value to dataArray and increment dataCount */
+    /* add the value to dataArray and increment dataCount 
+    keeping the value at the dataCount cell to be an address to the start of the array/string*/
     dataArray[dataCount] = value;
     dataCount++;
 }
@@ -59,6 +61,14 @@ void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
     strcpy(symbolTable[dataCount].identifier, symbolIdentifier);
 }
 
+/* the function recieves the number and a string reference for the function to insert the result */
+void toBinary(int num, char *binary) {
+    for (int i = 13; i >= 0; i--) {
+        binary[13 - i] = ((num >> i) & 1) ? '1' : '0';
+    }
+    binary[14] = '\0';  /* Null-terminate the string */
+}
+
 void addInstructionFirstWord(char* instructionLine) {
     char* operation;
     char* operand1;
@@ -73,7 +83,7 @@ void addInstructionFirstWord(char* instructionLine) {
     operand1 = strtok(NULL, ",");
     operand2 = strtok(NULL, ",");
 
-    /* iterate over the operations array */
+    /* iterate over the operations array checking operation validity */
     for (i = 0; i < sizeof(operations) / sizeof(operations[0]); i++) {
         if (strcmp(operations[i].name, operation) == 0) {
             strcat(resultWord, operations[i].opcode);
@@ -121,13 +131,13 @@ void addInstructionFirstWord(char* instructionLine) {
         strcat(resultWord, "11");  
     /* direct addressing */
     else 
-        strcat(resultWord, "01"); 
-
+        strcat(resultWord, "01");
 
     /* adding the A,R,E bits */
     strcat(resultWord, "00");     
 
     /* handling errors */
+    /* TODO: check for other erros like brackets, correct register */
     if (!found) {
         printf("Error: Unknown operation %s.\n", operation);
     } else {
@@ -142,7 +152,28 @@ void addInstructionFirstWord(char* instructionLine) {
     }
 }
 
-void scanSymbols(FILE *file, Symbol *symbolTable) {
+
+/* for debugging */
+/* void printAll() {
+    int i;
+
+    printf("Symbols:\n");
+    for (i = 0; i < dataCount; i++) {
+        printf("Name: %s, Value: %d, Identifier: %s\n", symbolTable[i].name, symbolTable[i].value, symbolTable[i].identifier);
+    }
+
+    printf("\nInstruction Table:\n");
+    for (i = 0; i < instructionCount; i++) {
+        printf("Address: %d, Opcode: %d, Group: %d, Operand1: %d, Operand2: %d\n", instructionTable[i].address, instructionTable[i].opcode, instructionTable[i].group, instructionTable[i].operand1, instructionTable[i].operand2);
+    }
+
+    printf("\nData Array:\n");
+    for (i = 0; i < dataCount; i++) {
+        printf("Data: %d\n", dataArray[i]);
+    }
+} */
+
+void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
     char line[MAX_LINE_LENGTH];
     int address = 0;
 
@@ -182,7 +213,7 @@ void scanSymbols(FILE *file, Symbol *symbolTable) {
             continue;
         }
 
-        /* ~~~ intructions ~~~ */
+        /* ~~~~~ Intructions ~~~~~ */
 
         /* if its a symbol defenition like "SYMBOL: ____" */
         /* saving the pointer for the ":" in the line if exists */
@@ -196,7 +227,7 @@ void scanSymbols(FILE *file, Symbol *symbolTable) {
             /* move the pointer to the start of the directive */
             char *directiveStart = colonPosition + 1;
 
-            /* check for .data or .string directive */
+            /* check for directives or operations */
             if (strncmp(directiveStart, ".data ", 6) == 0 || strncmp(directiveStart, ".string ", 8) == 0) {
                 strcpy(symbolIdentifier, "data");
                 symbolValue = dataCount; /* saving the data starting address */
@@ -209,15 +240,20 @@ void scanSymbols(FILE *file, Symbol *symbolTable) {
                     char* pointer = strtok(directiveStart + 6, ",");
                     while (pointer != NULL) {
                         int value;
-                        if (sscanf(pointer, "%d", &value) == 1) {
-                            /* pointer on a number */
-                            addData(value);
-                        } else {
-                            /* pointer on a symbol */
-                            int definedVar = findMDefine(pointer);
-                            addData(definedVar);
-                            /* TODO: add the instruction to the instructionTable */
+                        char binary[15];
+
+                        /* assigning the pointer character to value and
+                        if its not a number, override its value to get a symbol */
+                        if (!sscanf(pointer, "%d", &value) == 1) {
+                            value = findMDefine(pointer);
                         }
+                        addData(value);
+
+                        /* getting a 14 bits binary representation of the value 
+                        and pushing it to the instuctionArray */
+                        toBinary(value, binary);
+                        strcpy(instructionTable[instructionCount++], binary);
+                        
                         pointer = strtok(NULL, ",");
                     }
                 }
@@ -234,10 +270,14 @@ void scanSymbols(FILE *file, Symbol *symbolTable) {
 
                     /* Iterate over each character in the string */
                     while (*pointer != '\"') {
-                        /* add a character to the dataArray */
+                        char binary[15];
+
                         addData((int)*pointer);
-                        
-                        /* TODO: add the instruction to the instructionTable */
+            
+                        /* getting a 14 bits binary representation of the character's ascii
+                        and pushing it to the instuctionArray */
+                        toBinary((int)*pointer, binary);
+                        strcpy(instructionTable[instructionCount++], binary);
 
                         /* Move to the next character */
                         pointer++;
@@ -248,28 +288,39 @@ void scanSymbols(FILE *file, Symbol *symbolTable) {
                     }
                 }
 
-                /* Code */
-                else {
-                    strcpy(symbolIdentifier, "code");
-                    symbolValue = instructionCount + 100;
-                    /* increase DC for the next symbol */
-                    dataCount++;
-                    addSymbol(symbolName, symbolValue, symbolIdentifier);
+            }
+            /* Code after symbol, ":" */
+            else {
+                strcpy(symbolIdentifier, "code");
+                symbolValue = instructionCount + 100;
+                /* increase DC for the next symbol */
+                dataCount++;
+                addSymbol(symbolName, symbolValue, symbolIdentifier);
 
-                    /* Extract the part of the line after the ":" */
-                    char *instructionStart = colonPosition + 1;
+                /* Extract the part of the line after the ":" */
+                char *instructionStart = colonPosition + 1;
 
-                    /* Skip any leading spaces or tabs */
-                    instructionStart += strspn(instructionStart, " \t");
+                /* Skip any leading spaces or tabs */
+                instructionStart += strspn(instructionStart, " \t");
 
-                    /* Pass the instruction to the addInstructionFirstWord function */
-                    addInstructionFirstWord(instructionStart);
-                }
+                /* Pass the instruction to the addInstructionFirstWord function */
+                addInstructionFirstWord(instructionStart);
             }
         }
 
-
+        /* independant operation */
+        addInstructionFirstWord(line);
 
         instructionCount ++;
     }
+    
+    /* Iterate over the symbolTable */
+    for (int i = 0; i < dataCount; i++) {
+        /* Check if the identifier of the symbol is "data" */
+        if (strcmp(symbolTable[i].identifier, "data") == 0) {
+            /* Add instructionCount + 100 to the value of the symbol */
+            symbolTable[i].value += instructionCount + 100;
+        }
+    }
+    
 }

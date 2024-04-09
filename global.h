@@ -4,8 +4,9 @@
 #define MAX_INSTRUCTIONS 3996
 #define WORD_LENGTH 14
 
+/* data integer array for .string and .data */
 extern int* dataArray;
-extern int currentSize;
+extern int dataArraySize;
 
 typedef struct {
     char name[MAX_LINE_LENGTH];
