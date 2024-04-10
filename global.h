@@ -1,4 +1,7 @@
-#define MAX_LINE_LENGTH 256
+#ifndef GLOBAL_H
+#define GLOBAL_H
+
+#define MAX_LINE_LENGTH 80
 #define MAX_MACROS 100
 #define MAX_SYMBOLS 4096
 #define MAX_INSTRUCTIONS 3996
@@ -41,4 +44,6 @@ static const Operation operations[] = {
 };
 
 char instructionTable[MAX_INSTRUCTIONS][WORD_LENGTH];
-int instructionCount = 0;
+extern int instructionCount;
+
+#endif /* GLOBAL_H */

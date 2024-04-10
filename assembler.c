@@ -6,11 +6,10 @@
 #include "first_scan.h"
 #include "global.h"
 
-typedef struct {
-    char symbolname[80];
-    char identifier[80]; 
-    int value;
-} Symbol;
+int instructionCount = 0;
+Symbol symbolTable[MAX_SYMBOLS];
+int* dataArray;
+int dataArraySize; 
 
 int main(int argc, char *argv[]) {
     FILE *input_file;
@@ -18,7 +17,6 @@ int main(int argc, char *argv[]) {
     char *input_filename;
     char *output_filename;
     char *copy_input_filename = strdup(argv[1]);
-    Symbol symbolTable[4096];
 
     /* allocating memory for data array and initializng dataArraySize to its size */
     dataArray = (int*) malloc(80 * sizeof(int));
@@ -55,17 +53,26 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     free(copy_input_filename);
-    free(output_filename);
+    
 
     /* Expand macros in the input file and write the result to the output file */
     expand_macros(input_file, output_file);
-    scanSymbolsAllocateWords(input_file, symbolTable);
 
     free(dataArray);
 
     /* close files */
     fclose(input_file);
     fclose(output_file);
+
+    /* Reopen the output file in read mode */
+    output_file = fopen(output_filename, "r");
+    if (output_file == NULL) {
+        printf("Error: Unable to open output file %s.\n", output_filename);
+        return 1;
+    }
+    
+    free(output_filename);
+    scanSymbolsAllocateWords(output_file, symbolTable);
 
     return 0;
 }

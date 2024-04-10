@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "first_scan.h"
 #include "global.h"
@@ -9,8 +10,9 @@ int dataCount = 0;
 
 /* find symbol value from symbol table by symbol name */
 int findMDefine(char* symbolName) {
+    int i;
     /* Iterate over the symbol table */
-    for (int i = 0; i < dataCount; i++) {
+    for (i = 0; i < dataCount; i++) {
         /* If the symbol name matches and its identifier is "mdefine", return its value */
         if (strcmp(symbolTable[i].name, symbolName) == 0 && strcmp(symbolTable[i].identifier, "mdefine") == 0) {
             return symbolTable[i].value;
@@ -50,7 +52,7 @@ int findSymbol(char* symbolName) {
 /* add symbol to the symbolTable */
 void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
     /* check for conflicts in the symbol table */
-    if(findSymbol >= 0 ){
+    if(findSymbol(symbolName) >= 0 ){
         printf("Error: Symbol %s already defined.\n", symbolName);
         return;
     }
@@ -63,7 +65,8 @@ void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
 
 /* the function recieves the number and a string reference for the function to insert the result */
 void toBinary(int num, char *binary) {
-    for (int i = 13; i >= 0; i--) {
+    int i;
+    for (i = 13; i >= 0; i--) {
         binary[13 - i] = ((num >> i) & 1) ? '1' : '0';
     }
     binary[14] = '\0';  /* Null-terminate the string */
@@ -154,34 +157,40 @@ void addInstructionFirstWord(char* instructionLine) {
 
 
 /* for debugging */
-/* void printAll() {
+void printAll(void) {
     int i;
-
-    printf("Symbols:\n");
+    printf("dataCount: %d\n instructionCount: %d\n", dataCount, instructionCount);
+    printf("~~~~~~~ Symbols: ~~~~~~~\n");
     for (i = 0; i < dataCount; i++) {
         printf("Name: %s, Value: %d, Identifier: %s\n", symbolTable[i].name, symbolTable[i].value, symbolTable[i].identifier);
     }
 
-    printf("\nInstruction Table:\n");
+    printf("\n~~~~~~~ Instruction Table: ~~~~~~~\n");
     for (i = 0; i < instructionCount; i++) {
-        printf("Address: %d, Opcode: %d, Group: %d, Operand1: %d, Operand2: %d\n", instructionTable[i].address, instructionTable[i].opcode, instructionTable[i].group, instructionTable[i].operand1, instructionTable[i].operand2);
+        printf("Instruction %d: %s\n", i, instructionTable[i]);
     }
 
-    printf("\nData Array:\n");
+    printf("\n~~~~~~~ Data Array: ~~~~~~~\n");
     for (i = 0; i < dataCount; i++) {
         printf("Data: %d\n", dataArray[i]);
     }
-} */
+}
 
 void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
     char line[MAX_LINE_LENGTH];
-    int address = 0;
+    int i;
 
     while (fgets(line, sizeof(line), file)) {
         /* symbol properties */
         char symbolName[MAX_LINE_LENGTH];
         char symbolIdentifier[10];
         int symbolValue;
+        char *colonPosition;
+
+        printf("%s", line);
+        if (line[0] == ';') {
+            continue;
+        }
 
         /* Parse the line according to a .define line */
         if (strncmp(line, ".define", 7) == 0) {
@@ -189,7 +198,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             sscanf(line, ".define %s = %d", symbolName, &symbolValue);
             /* increase DC for the next symbol */
             dataCount++;
-            addSymbols(symbolName, symbolValue, symbolIdentifier);
+            addSymbol(symbolName, symbolValue, symbolIdentifier);
             continue;
         }
 
@@ -199,7 +208,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             sscanf(line, ".extern %s", symbolName);
             /* increase DC for the next symbol */
             dataCount++;
-            addSymbol(symbolName, NULL, symbolIdentifier);  // Extern symbols don't have a value
+            addSymbol(symbolName, -1, symbolIdentifier); /* Extern symbols don't have a value, entring -1 */
             continue;
         }
 
@@ -209,23 +218,29 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             sscanf(line, ".entry %s", symbolName);
             /* increase DC for the next symbol */
             dataCount++;
-            addSymbol(symbolName, NULL, symbolIdentifier);  // Entry symbols don't have a value
+            addSymbol(symbolName, -1, symbolIdentifier); /* Entry symbols don't have a value, entring -1 */
             continue;
         }
-
+        printf("SymbolName: %s\n", symbolName);
         /* ~~~~~ Intructions ~~~~~ */
 
         /* if its a symbol defenition like "SYMBOL: ____" */
         /* saving the pointer for the ":" in the line if exists */
-        char *colonPosition = strchr(line, ':');
+        colonPosition = strchr(line, ':');
         if (colonPosition) {
+            char *directiveStart;
+            int length = colonPosition - line;
 
+            printf("Symbol!\n");
+            printf("Length:%d\n", length);
             /* copying the symbol name from the line */
-            strncpy(symbolName, line, colonPosition - line);
+            strncpy(symbolName, line, length);
+            printf("SymbolName: %s", symbolName);
+
             symbolName[colonPosition - line] = '\0';
 
             /* move the pointer to the start of the directive */
-            char *directiveStart = colonPosition + 1;
+            directiveStart = colonPosition + 1;
 
             /* check for directives or operations */
             if (strncmp(directiveStart, ".data ", 6) == 0 || strncmp(directiveStart, ".string ", 8) == 0) {
@@ -244,7 +259,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
 
                         /* assigning the pointer character to value and
                         if its not a number, override its value to get a symbol */
-                        if (!sscanf(pointer, "%d", &value) == 1) {
+                        if (sscanf(pointer, "%d", &value) != 1) {
                             value = findMDefine(pointer);
                         }
                         addData(value);
@@ -291,6 +306,8 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             }
             /* Code after symbol, ":" */
             else {
+                char *instructionStart;
+
                 strcpy(symbolIdentifier, "code");
                 symbolValue = instructionCount + 100;
                 /* increase DC for the next symbol */
@@ -298,7 +315,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                 addSymbol(symbolName, symbolValue, symbolIdentifier);
 
                 /* Extract the part of the line after the ":" */
-                char *instructionStart = colonPosition + 1;
+                instructionStart = colonPosition + 1;
 
                 /* Skip any leading spaces or tabs */
                 instructionStart += strspn(instructionStart, " \t");
@@ -312,15 +329,14 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         addInstructionFirstWord(line);
 
         instructionCount ++;
-    }
-    
+    }    
     /* Iterate over the symbolTable */
-    for (int i = 0; i < dataCount; i++) {
+    for (i = 0; i < dataCount; i++) {
         /* Check if the identifier of the symbol is "data" */
         if (strcmp(symbolTable[i].identifier, "data") == 0) {
             /* Add instructionCount + 100 to the value of the symbol */
             symbolTable[i].value += instructionCount + 100;
         }
     }
-    
+    printAll();
 }

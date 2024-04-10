@@ -61,6 +61,7 @@ void replace_macros(char *line, FILE *output_file) {
     /* and also check for validity */
     if (fprintf(output_file, "%s\n", line) < 0) {
         fprintf(stderr, "ERROR: write to output file failed\n");
+        printf("ERROR: write to output file failed\n");
         exit(EXIT_FAILURE);
     }
 }
