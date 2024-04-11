@@ -74,17 +74,30 @@ void toBinary(int num, char *binary) {
 
 void addInstructionFirstWord(char* instructionLine) {
     char* operation;
+    char* operands;
     char* operand1;
     char* operand2;
+    char* saveptr;
+
     int i; 
     int found = 0;
     char resultWord[WORD_LENGTH] = "0000"; /* starting with the four not-used bits */
     int additionalWords = 0;
 
     /* split the instructionLine into tokens */
-    operation = strtok(instructionLine, ":");
-    operand1 = strtok(NULL, ",");
-    operand2 = strtok(NULL, ",");
+    operation = strtok(instructionLine, " ");
+    operands = strtok(NULL, "");
+
+    if (operands != NULL) {
+        saveptr = operands;
+        operand1 = strsep(&saveptr, ",");
+        operand2 = strsep(&saveptr, ",");
+    } else {
+        operand1 = NULL;
+        operand2 = NULL;
+    }
+
+    printf("opname: %s\t op1: %s\t op2: %s\t\n", operation, operand1, operand2);
 
     /* iterate over the operations array checking operation validity */
     for (i = 0; i < sizeof(operations) / sizeof(operations[0]); i++) {
@@ -176,6 +189,8 @@ void printAll(void) {
     }
 }
 
+
+
 void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
     char line[MAX_LINE_LENGTH];
     int i;
@@ -199,6 +214,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* increase DC for the next symbol */
             dataCount++;
             addSymbol(symbolName, symbolValue, symbolIdentifier);
+            printf("define added: sname-%s svalue-%d siden-%s\n", symbolName, symbolValue, symbolIdentifier);
             continue;
         }
 
@@ -209,6 +225,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* increase DC for the next symbol */
             dataCount++;
             addSymbol(symbolName, -1, symbolIdentifier); /* Extern symbols don't have a value, entring -1 */
+            printf("extern added: sname-%s svalue-%d siden-%s\n", symbolName, -1, symbolIdentifier);
             continue;
         }
 
@@ -219,9 +236,10 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* increase DC for the next symbol */
             dataCount++;
             addSymbol(symbolName, -1, symbolIdentifier); /* Entry symbols don't have a value, entring -1 */
+            printf("entry added: sname-%s svalue-%d siden-%s\n", symbolName, -1, symbolIdentifier);
             continue;
         }
-        printf("SymbolName: %s\n", symbolName);
+
         /* ~~~~~ Intructions ~~~~~ */
 
         /* if its a symbol defenition like "SYMBOL: ____" */
@@ -230,83 +248,92 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         if (colonPosition) {
             char *directiveStart;
             int length = colonPosition - line;
+            int dataBool;
 
-            printf("Symbol!\n");
-            printf("Length:%d\n", length);
+            printf("Symbol found!\n");
             /* copying the symbol name from the line */
             strncpy(symbolName, line, length);
-            printf("SymbolName: %s", symbolName);
+            printf("SymbolName: %s\n", symbolName);
 
             symbolName[colonPosition - line] = '\0';
 
             /* move the pointer to the start of the directive */
             directiveStart = colonPosition + 1;
-
+            printf("directiveStart: %s\n", directiveStart);
             /* check for directives or operations */
-            if (strncmp(directiveStart, ".data ", 6) == 0 || strncmp(directiveStart, ".string ", 8) == 0) {
+
+            dataBool = strncmp(directiveStart, ".string ", 8);
+            printf("dataBool: %d\n", dataBool);
+            
+            
+            if (strlen(directiveStart) >= 6 && strncmp(directiveStart, ".data ", 6) == 0) {
+                char* pointer = strtok(directiveStart + 6, ",");
+                
                 strcpy(symbolIdentifier, "data");
                 symbolValue = dataCount; /* saving the data starting address */
 
-                /* adding the actual data */
+                printf(".data symbol");
+                /* skip to the first number of the array */
+                while (pointer != NULL) {
+                    int value;
+                    char binary[15];
 
-                /* Array */
-                if(strncmp(directiveStart, ".data ", 6) == 0){
-                    /* skip to the first number of the array */
-                    char* pointer = strtok(directiveStart + 6, ",");
-                    while (pointer != NULL) {
-                        int value;
-                        char binary[15];
-
-                        /* assigning the pointer character to value and
-                        if its not a number, override its value to get a symbol */
-                        if (sscanf(pointer, "%d", &value) != 1) {
-                            value = findMDefine(pointer);
-                        }
-                        addData(value);
-
-                        /* getting a 14 bits binary representation of the value 
-                        and pushing it to the instuctionArray */
-                        toBinary(value, binary);
-                        strcpy(instructionTable[instructionCount++], binary);
-                        
-                        pointer = strtok(NULL, ",");
+                    /* assigning the pointer character to value and
+                    if its not a number, override its value to get a symbol */
+                    if (sscanf(pointer, "%d", &value) != 1) {
+                        value = findMDefine(pointer);
                     }
-                }
+                    addData(value);
 
-                /* String */
-                else if(strncmp(directiveStart, ".string ", 8) == 0){
-                    /* skip to the first character after the " */
-                    char* pointer = strchr(directiveStart, '\"');
-                    if (pointer == NULL) {
-                        printf("Error: missing starting quote in .string directive\n");
+                    /* getting a 14 bits binary representation of the value 
+                    and pushing it to the instuctionArray */
+                    toBinary(value, binary);
+                    strcpy(instructionTable[instructionCount++], binary);
+                            
+                    pointer = strtok(NULL, ",");
+                }
+            }
+                
+            /* String */
+            else if (strlen(directiveStart) >= 8 && strncmp(directiveStart, ".string ", 8) == 0) {
+                char* pointer = strchr(directiveStart, '\"');
+
+                strcpy(symbolIdentifier, "data");
+                symbolValue = dataCount; /* saving the data starting address */
+                
+                printf(".string symbol");
+                /* skip to the first character after the " */
+                if (pointer == NULL) {
+                    printf("Error: missing starting quote in .string directive\n");
+                    exit(1);
+                }
+                pointer++;  /* Skip past the opening quote */
+
+                /* Iterate over each character in the string */
+                while (*pointer != '\"') {
+                    char binary[15];
+
+                    addData((int)*pointer);
+        
+                    /* getting a 14 bits binary representation of the character's ascii
+                    and pushing it to the instuctionArray */
+                    toBinary((int)*pointer, binary);
+                    strcpy(instructionTable[instructionCount++], binary);
+
+                    /* Move to the next character */
+                    pointer++;
+                    if (*pointer == '\0') {
+                        printf("Error: missing closing quote in .string directive\n");
                         exit(1);
                     }
-                    pointer++;  /* Skip past the opening quote */
-
-                    /* Iterate over each character in the string */
-                    while (*pointer != '\"') {
-                        char binary[15];
-
-                        addData((int)*pointer);
-            
-                        /* getting a 14 bits binary representation of the character's ascii
-                        and pushing it to the instuctionArray */
-                        toBinary((int)*pointer, binary);
-                        strcpy(instructionTable[instructionCount++], binary);
-
-                        /* Move to the next character */
-                        pointer++;
-                        if (*pointer == '\0') {
-                            printf("Error: missing closing quote in .string directive\n");
-                            exit(1);
-                        }
-                    }
                 }
-
             }
+
+            
             /* Code after symbol, ":" */
             else {
                 char *instructionStart;
+                printf("no data, code...\n");
 
                 strcpy(symbolIdentifier, "code");
                 symbolValue = instructionCount + 100;
@@ -324,12 +351,11 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                 addInstructionFirstWord(instructionStart);
             }
         }
-
         /* independant operation */
         addInstructionFirstWord(line);
 
         instructionCount ++;
-    }    
+    }  
     /* Iterate over the symbolTable */
     for (i = 0; i < dataCount; i++) {
         /* Check if the identifier of the symbol is "data" */
