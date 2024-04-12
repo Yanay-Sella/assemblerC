@@ -51,8 +51,11 @@ int findSymbol(char* symbolName) {
 
 /* add symbol to the symbolTable */
 void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
-    /* check for conflicts in the symbol table */
-    if(findSymbol(symbolName) >= 0 ){
+    int symbolIndex = findSymbol(symbolName);
+    
+    /* check for conflicts in the symbol table 
+    entry symbols can be added with onflicts, and vice versa */
+    if(symbolIndex >= 0 && strcmp(symbolTable[symbolIndex].identifier, "entry") != 0 && strcmp(symbolIdentifier, "entry") != 0){
         printf("Error: Symbol %s already defined.\n", symbolName);
         return;
     }
@@ -97,7 +100,7 @@ void addInstructionFirstWord(char* instructionLine) {
         operand2 = NULL;
     }
 
-    printf("opname: %s\t op1: %s\t op2: %s\t\n", operation, operand1, operand2);
+    printf("opname:%s\t op1:%s\t op2:%s\t\n", operation, operand1, operand2);
 
     /* iterate over the operations array checking operation validity */
     for (i = 0; i < sizeof(operations) / sizeof(operations[0]); i++) {
@@ -109,7 +112,7 @@ void addInstructionFirstWord(char* instructionLine) {
     }
 
     /* calculate additional words based on operands */
-    if (operand1[0] == 'r' && operand2[0] == 'r') {
+    if (operand1 && operand1[0] == 'r' && operand2 && operand2[0] == 'r') {
         /* two register operands can be combined into one word */
         additionalWords = 1;
     } else {
@@ -117,40 +120,49 @@ void addInstructionFirstWord(char* instructionLine) {
         additionalWords = (operand1 != NULL) + (operand2 != NULL);
 
         /* array operand contributes an -extra- word */
-        if (strstr(operand1, "[") && strstr(operand1, "]")) additionalWords++;
-        if (strstr(operand2, "[") && strstr(operand2, "]")) additionalWords++;
+        if (operand1 && strstr(operand1, "[") && strstr(operand1, "]")) additionalWords++;
+        if (operand2 && strstr(operand2, "[") && strstr(operand2, "]")) additionalWords++;
     }
 
     /* ~~~ taking care of the source operand bits 5-4 ~~~ */
     /* immediate addressing */
-    if (operand1[0] == '#')
+    if(operand1 != NULL) {
+        if (operand1[0] == '#')
+            strcat(resultWord, "00");
+        /* index addressing */    
+        else if (strstr(operand1, "[") && strstr(operand1, "]"))
+            strcat(resultWord, "10");  
+        /* direct register addressing */
+        else if (operand1[0] == 'r' && isdigit(operand1[1]) && operand1[1] >= '0' && operand1[1] <= '7') 
+            strcat(resultWord, "11");  
+        /* direct addressing */
+        else 
+            strcat(resultWord, "01"); 
+    } else {
+        /* operand1 is null */
         strcat(resultWord, "00");
-    /* index addressing */    
-    else if (strstr(operand1, "[") && strstr(operand1, "]"))
-        strcat(resultWord, "10");  
-    /* direct register addressing */
-    else if (operand1[0] == 'r' && isdigit(operand1[1]) && operand1[1] >= '0' && operand1[1] <= '7') 
-        strcat(resultWord, "11");  
-    /* direct addressing */
-    else 
-        strcat(resultWord, "01"); 
-
+    }
     /* ~~~ taking care of the target operand bits 3-2 ~~~ */
     /* immediate addressing */
-    if (operand2[0] == '#')
+    if(operand2 != NULL) {
+        if (operand2[0] == '#')
+            strcat(resultWord, "00");
+        /* index addressing */    
+        else if (strstr(operand2, "[") && strstr(operand2, "]"))
+            strcat(resultWord, "10");  
+        /* direct register addressing */
+        else if (operand2[0] == 'r' && isdigit(operand2[1]) && operand2[1] >= '0' && operand2[1] <= '7') 
+            strcat(resultWord, "11");  
+        /* direct addressing */
+        else 
+            strcat(resultWord, "01");
+    } else {
+        /* operand2 is null */
         strcat(resultWord, "00");
-    /* index addressing */    
-    else if (strstr(operand2, "[") && strstr(operand2, "]"))
-        strcat(resultWord, "10");  
-    /* direct register addressing */
-    else if (operand2[0] == 'r' && isdigit(operand2[1]) && operand2[1] >= '0' && operand2[1] <= '7') 
-        strcat(resultWord, "11");  
-    /* direct addressing */
-    else 
-        strcat(resultWord, "01");
-
+    }
     /* adding the A,R,E bits */
     strcat(resultWord, "00");     
+    printf("word:%s\n", resultWord);
 
     /* handling errors */
     /* TODO: check for other erros like brackets, correct register */
@@ -202,7 +214,10 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         int symbolValue;
         char *colonPosition;
 
-        printf("%s", line);
+        printf("\n--------------------------\n");
+
+
+        printf("%s\tIC=%d\n", line, instructionCount);
         if (line[0] == ';') {
             continue;
         }
@@ -248,23 +263,22 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         if (colonPosition) {
             char *directiveStart;
             int length = colonPosition - line;
-            int dataBool;
 
-            printf("Symbol found!\n");
+            printf("SYMBOL FOUND!\n");
             /* copying the symbol name from the line */
             strncpy(symbolName, line, length);
-            printf("SymbolName: %s\n", symbolName);
 
             symbolName[colonPosition - line] = '\0';
 
             /* move the pointer to the start of the directive */
             directiveStart = colonPosition + 1;
-            printf("directiveStart: %s\n", directiveStart);
+            /* Remove leading white spaces */
+            while(isspace((unsigned char) *directiveStart)) {
+                directiveStart++;
+            }
+            printf("SymbolName: %s\t", symbolName);
+            printf("directiveStart:%s\n", directiveStart);
             /* check for directives or operations */
-
-            dataBool = strncmp(directiveStart, ".string ", 8);
-            printf("dataBool: %d\n", dataBool);
-            
             
             if (strlen(directiveStart) >= 6 && strncmp(directiveStart, ".data ", 6) == 0) {
                 char* pointer = strtok(directiveStart + 6, ",");
@@ -272,7 +286,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                 strcpy(symbolIdentifier, "data");
                 symbolValue = dataCount; /* saving the data starting address */
 
-                printf(".data symbol");
+                printf("DATA symbol\n");
                 /* skip to the first number of the array */
                 while (pointer != NULL) {
                     int value;
@@ -284,6 +298,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                         value = findMDefine(pointer);
                     }
                     addData(value);
+                    addSymbol(symbolName, symbolValue, symbolIdentifier);
 
                     /* getting a 14 bits binary representation of the value 
                     and pushing it to the instuctionArray */
@@ -301,7 +316,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                 strcpy(symbolIdentifier, "data");
                 symbolValue = dataCount; /* saving the data starting address */
                 
-                printf(".string symbol");
+                printf("STRING symbol\n");
                 /* skip to the first character after the " */
                 if (pointer == NULL) {
                     printf("Error: missing starting quote in .string directive\n");
@@ -314,7 +329,8 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                     char binary[15];
 
                     addData((int)*pointer);
-        
+                    addSymbol(symbolName, symbolValue, symbolIdentifier);
+
                     /* getting a 14 bits binary representation of the character's ascii
                     and pushing it to the instuctionArray */
                     toBinary((int)*pointer, binary);
@@ -333,13 +349,15 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* Code after symbol, ":" */
             else {
                 char *instructionStart;
-                printf("no data, code...\n");
+                printf("CODE symbol\n");
 
                 strcpy(symbolIdentifier, "code");
                 symbolValue = instructionCount + 100;
                 /* increase DC for the next symbol */
                 dataCount++;
                 addSymbol(symbolName, symbolValue, symbolIdentifier);
+                printf("code symbol added: sname-%s svalue-%d siden-%s\n", symbolName, symbolValue, symbolIdentifier);
+
 
                 /* Extract the part of the line after the ":" */
                 instructionStart = colonPosition + 1;
@@ -352,9 +370,10 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             }
         }
         /* independant operation */
-        addInstructionFirstWord(line);
-
-        instructionCount ++;
+        else {
+            addInstructionFirstWord(line);
+            instructionCount ++;
+        }
     }  
     /* Iterate over the symbolTable */
     for (i = 0; i < dataCount; i++) {

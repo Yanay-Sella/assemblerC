@@ -1,11 +1,12 @@
 #ifndef GLOBAL_H
+
 #define GLOBAL_H
 
 #define MAX_LINE_LENGTH 80
 #define MAX_MACROS 100
 #define MAX_SYMBOLS 4096
 #define MAX_INSTRUCTIONS 3996
-#define WORD_LENGTH 14
+#define WORD_LENGTH 15
 
 /* data integer array for .string and .data */
 extern int* dataArray;
@@ -46,4 +47,4 @@ static const Operation operations[] = {
 char instructionTable[MAX_INSTRUCTIONS][WORD_LENGTH];
 extern int instructionCount;
 
-#endif /* GLOBAL_H */
+#endif
