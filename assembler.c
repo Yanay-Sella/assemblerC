@@ -44,13 +44,13 @@ int main(int argc, char *argv[]) {
         printf("Error: Unable to open input file %s.\n", argv[1]);
         free(copy_input_filename);
         free(output_filename);
-        return 1;
+        exit(1);
     }
     if (output_file == NULL) {
         printf("Error: Unable to open output file %s.\n", output_filename);
         free(copy_input_filename);
         free(output_filename);
-        return 1;
+        exit(1);
     }
     free(copy_input_filename);
     
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     output_file = fopen(output_filename, "r");
     if (output_file == NULL) {
         printf("Error: Unable to open output file %s.\n", output_filename);
-        return 1;
+        exit(1);
     }
     
     free(output_filename);

@@ -287,6 +287,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         colonPosition = strchr(line, ':');
         if (colonPosition) {
             char *directiveStart;
+            /* symbol length */
             int length = colonPosition - line;
 
             printf("SYMBOL FOUND!\n");
