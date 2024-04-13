@@ -11,6 +11,20 @@ int dataCount = 0;
 /* find symbol value from symbol table by symbol name */
 int findMDefine(char* symbolName) {
     int i;
+    int len;
+
+    /* Remove leading white spaces */
+    while(isspace((unsigned char) *symbolName)) {
+        symbolName++;
+    }
+
+    /* Remove trailing newline and white spaces */
+    len = strlen(symbolName);
+    while (len > 0 && isspace((unsigned char) symbolName[len-1])) {
+        symbolName[len-1] = '\0';
+        len--;
+    }
+    
     /* Iterate over the symbol table */
     for (i = 0; i < dataCount; i++) {
         /* If the symbol name matches and its identifier is "mdefine", return its value */
@@ -36,6 +50,7 @@ void addData(int value) {
     keeping the value at the dataCount cell to be an address to the start of the array/string*/
     dataArray[dataCount] = value;
     dataCount++;
+    printf("ADDED DATA:%d | DC:%d\n", value, dataCount);
 }
 
 int findSymbol(char* symbolName) {
@@ -51,8 +66,8 @@ int findSymbol(char* symbolName) {
 
 /* add symbol to the symbolTable */
 void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
-    int symbolIndex = findSymbol(symbolName);
     
+    int symbolIndex = findSymbol(symbolName);
     /* check for conflicts in the symbol table 
     entry symbols can be added with onflicts, and vice versa */
     if(symbolIndex >= 0 && strcmp(symbolTable[symbolIndex].identifier, "entry") != 0 && strcmp(symbolIdentifier, "entry") != 0){
@@ -64,6 +79,8 @@ void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
     strcpy(symbolTable[dataCount].name, symbolName);
     symbolTable[dataCount].value = symbolValue;
     strcpy(symbolTable[dataCount].identifier, symbolIdentifier);
+
+    printf("SYMBOL ADDED: sname-%s svalue-%d siden-%s DC-%d\n", symbolName, symbolValue, symbolIdentifier, dataCount);
 }
 
 /* the function recieves the number and a string reference for the function to insert the result */
@@ -86,6 +103,7 @@ void addInstructionFirstWord(char* instructionLine) {
     int found = 0;
     char resultWord[WORD_LENGTH] = "0000"; /* starting with the four not-used bits */
     int additionalWords = 0;
+    int len;
 
     /* split the instructionLine into tokens */
     operation = strtok(instructionLine, " ");
@@ -94,14 +112,22 @@ void addInstructionFirstWord(char* instructionLine) {
     if (operands != NULL) {
         saveptr = operands;
         operand1 = strsep(&saveptr, ",");
-        operand2 = strsep(&saveptr, ",");
+        operand2 = strsep(&saveptr, ",");  
     } else {
         operand1 = NULL;
         operand2 = NULL;
     }
+    
 
-    printf("opname:%s\t op1:%s\t op2:%s\t\n", operation, operand1, operand2);
+    /* remove trailing newline and white spaces from operation */
+    len = strlen(operation);
+    while (len > 0 && isspace((unsigned char) operation[len-1])) {
+        len--;
+    }
+    operation[len] = '\0';
 
+    printf("opname:%s | op1:%s | op2:%s\n", operation, operand1, operand2);
+    
     /* iterate over the operations array checking operation validity */
     for (i = 0; i < sizeof(operations) / sizeof(operations[0]); i++) {
         if (strcmp(operations[i].name, operation) == 0) {
@@ -162,12 +188,14 @@ void addInstructionFirstWord(char* instructionLine) {
     }
     /* adding the A,R,E bits */
     strcat(resultWord, "00");     
+    printf("additional words: %d\n", additionalWords);
     printf("word:%s\n", resultWord);
 
     /* handling errors */
     /* TODO: check for other erros like brackets, correct register */
     if (!found) {
-        printf("Error: Unknown operation %s.\n", operation);
+        printf("Error: Unknown operation-%s.\n", operation);
+        exit(1);
     } else {
         /* check if there's enough space in the instructionTalbe */
         if (instructionCount + additionalWords >= MAX_INSTRUCTIONS) {
@@ -176,7 +204,7 @@ void addInstructionFirstWord(char* instructionLine) {
         }
         /* add the resultWord to the instructionTable */
         strcpy(instructionTable[instructionCount], resultWord);
-        instructionCount += additionalWords; /* increment instructionCount by the number of additional words */
+        instructionCount += additionalWords + 1; /* increment instructionCount by the number of additional words */
     }
 }
 
@@ -227,9 +255,8 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             strcpy(symbolIdentifier, "mdefine");
             sscanf(line, ".define %s = %d", symbolName, &symbolValue);
             /* increase DC for the next symbol */
-            dataCount++;
             addSymbol(symbolName, symbolValue, symbolIdentifier);
-            printf("define added: sname-%s svalue-%d siden-%s\n", symbolName, symbolValue, symbolIdentifier);
+            dataCount++;
             continue;
         }
 
@@ -240,7 +267,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* increase DC for the next symbol */
             dataCount++;
             addSymbol(symbolName, -1, symbolIdentifier); /* Extern symbols don't have a value, entring -1 */
-            printf("extern added: sname-%s svalue-%d siden-%s\n", symbolName, -1, symbolIdentifier);
             continue;
         }
 
@@ -251,7 +277,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* increase DC for the next symbol */
             dataCount++;
             addSymbol(symbolName, -1, symbolIdentifier); /* Entry symbols don't have a value, entring -1 */
-            printf("entry added: sname-%s svalue-%d siden-%s\n", symbolName, -1, symbolIdentifier);
             continue;
         }
 
@@ -276,17 +301,19 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             while(isspace((unsigned char) *directiveStart)) {
                 directiveStart++;
             }
-            printf("SymbolName: %s\t", symbolName);
+            printf("SymbolName:%s | ", symbolName);
             printf("directiveStart:%s\n", directiveStart);
             /* check for directives or operations */
             
+            /* Array */
             if (strlen(directiveStart) >= 6 && strncmp(directiveStart, ".data ", 6) == 0) {
                 char* pointer = strtok(directiveStart + 6, ",");
                 
                 strcpy(symbolIdentifier, "data");
                 symbolValue = dataCount; /* saving the data starting address */
+                /* Adding the symbol */
+                addSymbol(symbolName, symbolValue, symbolIdentifier);                
 
-                printf("DATA symbol\n");
                 /* skip to the first number of the array */
                 while (pointer != NULL) {
                     int value;
@@ -298,7 +325,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                         value = findMDefine(pointer);
                     }
                     addData(value);
-                    addSymbol(symbolName, symbolValue, symbolIdentifier);
 
                     /* getting a 14 bits binary representation of the value 
                     and pushing it to the instuctionArray */
@@ -315,8 +341,8 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
 
                 strcpy(symbolIdentifier, "data");
                 symbolValue = dataCount; /* saving the data starting address */
+                addSymbol(symbolName, symbolValue, symbolIdentifier);
                 
-                printf("STRING symbol\n");
                 /* skip to the first character after the " */
                 if (pointer == NULL) {
                     printf("Error: missing starting quote in .string directive\n");
@@ -329,7 +355,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                     char binary[15];
 
                     addData((int)*pointer);
-                    addSymbol(symbolName, symbolValue, symbolIdentifier);
 
                     /* getting a 14 bits binary representation of the character's ascii
                     and pushing it to the instuctionArray */
@@ -356,8 +381,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                 /* increase DC for the next symbol */
                 dataCount++;
                 addSymbol(symbolName, symbolValue, symbolIdentifier);
-                printf("code symbol added: sname-%s svalue-%d siden-%s\n", symbolName, symbolValue, symbolIdentifier);
-
 
                 /* Extract the part of the line after the ":" */
                 instructionStart = colonPosition + 1;
@@ -372,7 +395,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         /* independant operation */
         else {
             addInstructionFirstWord(line);
-            instructionCount ++;
         }
     }  
     /* Iterate over the symbolTable */
