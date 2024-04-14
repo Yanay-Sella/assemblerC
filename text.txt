@@ -5,17 +5,17 @@
 --------------------------
 .entry LIST
 	IC=0
-SYMBOL ADDED: sname-LIST svalue--1 siden-entry DC-1
+SYMBOL ADDED: sname-LIST svalue--1 siden-entry SC-1
 
 --------------------------
 .extern W
 	IC=0
-SYMBOL ADDED: sname-W svalue--1 siden-external DC-2
+SYMBOL ADDED: sname-W svalue--1 siden-external SC-2
 
 --------------------------
 .define sz = 2
 	IC=0
-SYMBOL ADDED: sname-sz svalue-2 siden-mdefine DC-2
+SYMBOL ADDED: sname-sz svalue-2 siden-mdefine SC-3
 
 --------------------------
 MAIN:	mov r3, LIST[sz]
@@ -24,10 +24,11 @@ SYMBOL FOUND!
 SymbolName:MAIN | directiveStart:mov r3, LIST[sz]
 
 CODE symbol
-SYMBOL ADDED: sname-MAIN svalue-100 siden-code DC-4
+SYMBOL ADDED: sname-MAIN svalue-100 siden-code SC-4
 opname:mov | op1:r3 | op2: LIST[sz]
 
-additional words: 3word:00000000111000
+additional words: 3
+word:00000000111000
 
 --------------------------
 LOOP: 	jmp W
@@ -36,45 +37,51 @@ SYMBOL FOUND!
 SymbolName:LOOP | directiveStart:jmp W
 
 CODE symbol
-SYMBOL ADDED: sname-LOOP svalue-104 siden-code DC-5
+SYMBOL ADDED: sname-LOOP svalue-104 siden-code SC-5
 opname:jmp | op1:W
  | op2:(null)
-additional words: 1word:00001001010000
+additional words: 1
+word:00001001010000
 
 --------------------------
 prn #-5
 	IC=6
 opname:prn | op1:#-5
  | op2:(null)
-additional words: 1word:00001100000000
+additional words: 1
+word:00001100000000
 
 --------------------------
 mov STR[5], STR[2]
 	IC=8
 opname:mov | op1:STR[5] | op2: STR[2]
 
-additional words: 4word:00000000101000
+additional words: 4
+word:00000000101000
 
 --------------------------
 sub r1, r4
 	IC=13
 opname:sub | op1:r1 | op2: r4
 
-additional words: 2word:00000011110100
+additional words: 2
+word:00000011110100
 
 --------------------------
 cmp K, #sz
 	IC=16
 opname:cmp | op1:K | op2: #sz
 
-additional words: 2word:00000001010100
+additional words: 2
+word:00000001010100
 
 --------------------------
 bne W
 	IC=19
 opname:bne | op1:W
  | op2:(null)
-additional words: 1word:00001010010000
+additional words: 1
+word:00001010010000
 
 --------------------------
 L1: 	inc L3
@@ -83,22 +90,24 @@ SYMBOL FOUND!
 SymbolName:L1 | directiveStart:inc L3
 
 CODE symbol
-SYMBOL ADDED: sname-L1 svalue-121 siden-code DC-6
+SYMBOL ADDED: sname-L1 svalue-121 siden-code SC-6
 opname:inc | op1:L3
  | op2:(null)
-additional words: 1word:00000111010000
+additional words: 1
+word:00000111010000
 
 --------------------------
 .entry LOOP
 	IC=23
-SYMBOL ADDED: sname-LOOP svalue--1 siden-entry DC-7
+SYMBOL ADDED: sname-LOOP svalue--1 siden-entry SC-7
 
 --------------------------
 bne LOOP
 	IC=23
 opname:bne | op1:LOOP
  | op2:(null)
-additional words: 1word:00001010010000
+additional words: 1
+word:00001010010000
 
 --------------------------
 END: hlt
@@ -107,14 +116,15 @@ SYMBOL FOUND!
 SymbolName:END | directiveStart:hlt
 
 CODE symbol
-SYMBOL ADDED: sname-END svalue-125 siden-code DC-8
+SYMBOL ADDED: sname-END svalue-125 siden-code SC-8
 opname:hlt | op1:(null) | op2:(null)
-additional words: 0word:00001111000000
+additional words: 0
+word:00001111000000
 
 --------------------------
 .define len = 4
 	IC=26
-SYMBOL ADDED: sname-len svalue-4 siden-mdefine DC-8
+SYMBOL ADDED: sname-len svalue-4 siden-mdefine SC-9
 
 --------------------------
 STR: .string "abcdef"
@@ -122,13 +132,13 @@ STR: .string "abcdef"
 SYMBOL FOUND!
 SymbolName:STR | directiveStart:.string "abcdef"
 
-SYMBOL ADDED: sname-STR svalue-9 siden-data DC-9
-ADDED DATA:97 | DC:10
-ADDED DATA:98 | DC:11
-ADDED DATA:99 | DC:12
-ADDED DATA:100 | DC:13
-ADDED DATA:101 | DC:14
-ADDED DATA:102 | DC:15
+SYMBOL ADDED: sname-STR svalue-0 siden-data SC-10
+ADDED DATA:97 | DC:1
+ADDED DATA:98 | DC:2
+ADDED DATA:99 | DC:3
+ADDED DATA:100 | DC:4
+ADDED DATA:101 | DC:5
+ADDED DATA:102 | DC:6
 
 --------------------------
 LIST: .data 6, -9, len
@@ -136,10 +146,10 @@ LIST: .data 6, -9, len
 SYMBOL FOUND!
 SymbolName:LIST | directiveStart:.data 6, -9, len
 
-SYMBOL ADDED: sname-LIST svalue-15 siden-data DC-15
-ADDED DATA:6 | DC:16
-ADDED DATA:-9 | DC:17
-ADDED DATA:4 | DC:18
+SYMBOL ADDED: sname-LIST svalue-6 siden-data SC-11
+ADDED DATA:6 | DC:7
+ADDED DATA:-9 | DC:8
+ADDED DATA:4 | DC:9
 
 --------------------------
 K: .data 22
@@ -147,36 +157,29 @@ K: .data 22
 SYMBOL FOUND!
 SymbolName:K | directiveStart:.data 22
 
-SYMBOL ADDED: sname-K svalue-18 siden-data DC-18
-ADDED DATA:22 | DC:19
+SYMBOL ADDED: sname-K svalue-9 siden-data SC-12
+ADDED DATA:22 | DC:10
 
 --------------------------
 .extern L3
 	IC=36
-SYMBOL ADDED: sname-L3 svalue--1 siden-external DC-20
-dataCount: 20
+SYMBOL ADDED: sname-L3 svalue--1 siden-external SC-13
+dataCount: 10
  instructionCount: 36
 ~~~~~~~ Symbols: ~~~~~~~
-Name: , Value: 0, Identifier: 
 Name: LIST, Value: -1, Identifier: entry
+Name: W, Value: -1, Identifier: external
 Name: sz, Value: 2, Identifier: mdefine
-Name: , Value: 0, Identifier: 
 Name: MAIN, Value: 100, Identifier: code
 Name: LOOP, Value: 104, Identifier: code
 Name: L1, Value: 121, Identifier: code
 Name: LOOP, Value: -1, Identifier: entry
+Name: END, Value: 125, Identifier: code
 Name: len, Value: 4, Identifier: mdefine
-Name: STR, Value: 145, Identifier: data
-Name: , Value: 0, Identifier: 
-Name: , Value: 0, Identifier: 
-Name: , Value: 0, Identifier: 
-Name: , Value: 0, Identifier: 
-Name: , Value: 0, Identifier: 
-Name: LIST, Value: 151, Identifier: data
-Name: , Value: 0, Identifier: 
-Name: , Value: 0, Identifier: 
-Name: K, Value: 154, Identifier: data
-Name: , Value: 0, Identifier: 
+Name: STR, Value: 136, Identifier: data
+Name: LIST, Value: 142, Identifier: data
+Name: K, Value: 145, Identifier: data
+Name: L3, Value: -1, Identifier: external
 
 ~~~~~~~ Instruction Table: ~~~~~~~
 Instruction 0: 00000000111000
@@ -217,15 +220,6 @@ Instruction 34: 00000000000100
 Instruction 35: 00000000010110
 
 ~~~~~~~ Data Array: ~~~~~~~
-Data: 0
-Data: 0
-Data: 0
-Data: 0
-Data: 21
-Data: 0
-Data: 0
-Data: 0
-Data: 0
 Data: 97
 Data: 98
 Data: 99
@@ -236,4 +230,3 @@ Data: 6
 Data: -9
 Data: 4
 Data: 22
-Data: 0

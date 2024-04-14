@@ -19,6 +19,7 @@ typedef struct {
 } Symbol;
 
 extern Symbol symbolTable[MAX_SYMBOLS];
+extern int symbolCount;
 
 typedef struct {
     const char* name;
@@ -46,5 +47,15 @@ static const Operation operations[] = {
 
 char instructionTable[MAX_INSTRUCTIONS][WORD_LENGTH];
 extern int instructionCount;
+
+typedef struct {
+    char operation[MAX_LINE_LENGTH];
+    char* operand1;
+    char* operand2;
+} InstructionParts;
+
+/* ~~~ common functions ~~~ */
+int findSymbol(char* symbolName);
+InstructionParts splitInstruction(char* instructionLine);
 
 #endif
