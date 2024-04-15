@@ -185,7 +185,7 @@ void addInstructionFirstWord(char* instructionLine) {
 /* for debugging */
 void printAll(void) {
     int i;
-    printf("dataCount: %d\n instructionCount: %d\n", dataCount, instructionCount);
+    printf("dataCount: %d\ninstructionCount: %d\n", dataCount, instructionCount);
     printf("~~~~~~~ Symbols: ~~~~~~~\n");
     for (i = 0; i < symbolCount; i++) {
         printf("Name: %s, Value: %d, Identifier: %s\n", symbolTable[i].name, symbolTable[i].value, symbolTable[i].identifier);

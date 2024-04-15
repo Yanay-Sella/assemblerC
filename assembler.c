@@ -4,7 +4,9 @@
 
 #include "pre_assembler.h"
 #include "first_scan.h"
+#include "second_scan.h"
 #include "global.h"
+
 
 int instructionCount = 0;
 Symbol symbolTable[MAX_SYMBOLS];
@@ -73,6 +75,11 @@ int main(int argc, char *argv[]) {
     
     free(output_filename);
     scanSymbolsAllocateWords(output_file, symbolTable);
+
+    /* Reset the file pointer to the start of the file */
+    rewind(output_file);
+    
+    scanAgainAndAddWords(output_file , symbolTable);
 
     return 0;
 }

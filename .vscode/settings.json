@@ -1,6 +1,7 @@
 {
   "files.associations": {
     "*.c": "c",
-    "first_scan.h": "c"
+    "first_scan.h": "c",
+    "global.h": "c"
   }
 }
