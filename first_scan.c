@@ -36,6 +36,7 @@ int findMDefine(char* symbolName) {
     /* if the symbol was not found or its identifier is not "mdefine" */
     printf("Error: Symbol %s not found or not an mdefine.\n", symbolName);
     isError = 1;
+    return -1;
 }
 
 /* add data to the dataArray */
@@ -236,7 +237,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* symbol length */
             int length = colonPosition - line;
 
-            printf("SYMBOL FOUND!\n");
             /* copying the symbol name from the line */
             strncpy(symbolName, line, length);
 
@@ -248,9 +248,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             while(isspace((unsigned char) *directiveStart)) {
                 directiveStart++;
             }
-            printf("SymbolName:%s | ", symbolName);
-            printf("directiveStart:%s\n", directiveStart);
-            /* check for directives or operations */
             
             /* Array */
             if (strlen(directiveStart) >= 6 && strncmp(directiveStart, ".data ", 6) == 0) {
@@ -326,7 +323,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             /* Code after symbol, ":" */
             else {
                 char *instructionStart;
-                printf("CODE symbol\n");
 
                 strcpy(symbolIdentifier, "code");
                 symbolValue = instructionCount + 100;

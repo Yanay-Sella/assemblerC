@@ -105,6 +105,10 @@ int main(int argc, char *argv[]) {
 
     writeObject(ob_file);
     /* it will create the file only if there are entries */
+    if(isError) {
+        printf("Errors found in file %s", input_filename);
+        return 1;
+    }
     createEntryFile(entFileName);
     createExternFile(extFileName);
 
