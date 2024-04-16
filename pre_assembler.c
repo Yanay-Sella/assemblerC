@@ -44,8 +44,6 @@ void trim_whitespace(char *str) {
 void replace_macros(char *line, FILE *output_file) {
     int i, j;
     for (i = 0; i < num_macros; i++) {
-        printf("line: %s \n", line);
-        printf("macro.name: %s \n", macros[i].name);
         if (strncmp(line, macros[i].name, strlen(macros[i].name)) == 0) {
             /* this line is a call to a macro, so write the macro's definition to the output file */
             for (j = 0; j < macros[i].num_lines; j++) {
@@ -57,7 +55,6 @@ void replace_macros(char *line, FILE *output_file) {
     /* this line is not a call to a macro, so write we it to the output file */
     /* and also check for validity */
     if (fprintf(output_file, "%s\n", line) < 0) {
-        fprintf(stderr, "ERROR: write to output file failed\n");
         printf("ERROR: write to output file failed\n");
         exit(1);
     }

@@ -51,7 +51,6 @@ void addData(int value) {
     keeping the value at the dataCount cell to be an address to the start of the array/string*/
     dataArray[dataCount] = value;
     dataCount++;
-    printf("ADDED DATA:%d | DC:%d\n", value, dataCount);
 }
 
 /* add symbol to the symbolTable */
@@ -71,8 +70,6 @@ void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
     symbolTable[symbolCount].value = symbolValue;
     strcpy(symbolTable[symbolCount].identifier, symbolIdentifier);
     symbolCount++;
-
-    printf("SYMBOL ADDED: sname-%s svalue-%d siden-%s SC-%d\n", symbolName, symbolValue, symbolIdentifier, symbolCount);
 }
 
 /* the function recieves the number and a string reference for the function to insert the result */
@@ -110,8 +107,6 @@ void addInstructionFirstWord(char* instructionLine) {
     while(operand1 != NULL && isspace((unsigned char)*operand1)) operand1++;
     while(operand2 != NULL && isspace((unsigned char)*operand2)) operand2++;
 
-    printf("opname:%s | op1:%s | op2:%s\n", operation, operand1, operand2);
-    
     /* iterate over the operations array checking operation validity */
     for (i = 0; i < sizeof(operations) / sizeof(operations[0]); i++) {
         if (strcmp(operations[i].name, operation) == 0) {
@@ -171,9 +166,7 @@ void addInstructionFirstWord(char* instructionLine) {
         strcat(resultWord, "00");
     }
     /* adding the A,R,E bits */
-    strcat(resultWord, "00");     
-    printf("additional words: %d\n", additionalWords);
-    printf("word:%s\n", resultWord);
+    strcat(resultWord, "00");
 
     /* handling errors */
     if (!found) {
@@ -192,27 +185,6 @@ void addInstructionFirstWord(char* instructionLine) {
     }
 }
 
-
-/* for debugging */
-void printAll(void) {
-    int i;
-    printf("dataCount: %d\ninstructionCount: %d\n", dataCount, instructionCount);
-    printf("~~~~~~~ Symbols: ~~~~~~~\n");
-    for (i = 0; i < symbolCount; i++) {
-        printf("Name: %s, Value: %d, Identifier: %s\n", symbolTable[i].name, symbolTable[i].value, symbolTable[i].identifier);
-    }
-
-    printf("\n~~~~~~~ Instruction Table: ~~~~~~~\n");
-    for (i = 0; i < instructionCount; i++) {
-        printf("Instruction %d: %s\n", i, instructionTable[i]);
-    }
-
-    printf("\n~~~~~~~ Data Array: ~~~~~~~\n");
-    for (i = 0; i < dataCount; i++) {
-        printf("Data: %d\n", dataArray[i]);
-    }
-}
-
 void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
     char line[MAX_LINE_LENGTH];
     int i;
@@ -224,10 +196,6 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         int symbolValue;
         char *colonPosition;
 
-        printf("\n--------------------------\n");
-
-
-        printf("%s\tIC=%d\n", line, instructionCount);
         if (line[0] == ';' || isWhiteLine(line)) {
             continue;
         }
@@ -389,5 +357,4 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
             symbolTable[i].value += instructionCount + 100 - dataCount;
         }
     }
-    printAll();
 }

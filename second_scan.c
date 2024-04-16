@@ -28,8 +28,6 @@ void addAdditionalWords(char* instructionLine) {
     while(operand1 != NULL && isspace((unsigned char)*operand1)) operand1++;
     while(operand2 != NULL && isspace((unsigned char)*operand2)) operand2++;
 
-    printf("op1:%s  op2:%s\n", operand1, operand2);
-
     /* Check if both operands are registers */
     if (operand1 != NULL && operand1[0] == 'r' && operand2 != NULL && operand2[0] == 'r') {
         /* both operands are registers, add one word for both */
@@ -63,7 +61,6 @@ void addAdditionalWords(char* instructionLine) {
         binRegisters[14] = '\0'; /* null terminate the string */
         /* add to instructionTable */
         strcpy(instructionTable[IC], binRegisters);
-        printf("register operands, added word:%s\n", binRegisters);
         IC++;
         return; /* no additional checks needed */ 
     }
@@ -95,7 +92,6 @@ void addAdditionalWords(char* instructionLine) {
 
             /* add to instructionTable */
             strcpy(instructionTable[IC], binary);
-            printf("immediate operand, added word:%s\n", binary);
         }
 
         /* index addressing: arr[k]*/    
@@ -130,7 +126,6 @@ void addAdditionalWords(char* instructionLine) {
                     if (strcmp(externUsageTable[i].symbolName, arrayName) == 0) {
                         /* found the symbol in the table, add the instruction number */
                         externUsageTable[i].locations[IC] = IC;
-                        printf("adding location:%d to symbol:%s\n", IC, arrayName);
                         break;
                     }
                 }
@@ -139,7 +134,6 @@ void addAdditionalWords(char* instructionLine) {
                     strcpy(externUsageTable[i].symbolName, arrayName);
                     externUsageTable[i].locations[0] = IC;
                     externUsageCount++;
-                    printf("adding extern name:%s\n", arrayName);
                 }
 
                 binAddress[12] = '0';
@@ -150,7 +144,6 @@ void addAdditionalWords(char* instructionLine) {
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
-            printf("array index operand, added word 1/2:%s\n", binAddress);
             
             /* two words are added so adding the first here */
             IC++;
@@ -165,7 +158,6 @@ void addAdditionalWords(char* instructionLine) {
                 /* indexStr is not a number, get it from the symbol table */
                 value = findMDefine(indexStr);
             }
-            printf("index:%d\n", value);
             
             free(tempOperand2);
 
@@ -181,7 +173,6 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the index word to the instructionTable */
             strcpy(instructionTable[IC], binIndex);
-            printf("array index operand, added word 2/2:%s\n", binIndex);
         }
 
         /* direct register addressing: r4 */
@@ -205,7 +196,6 @@ void addAdditionalWords(char* instructionLine) {
 
             /* add the binary word to the instructionTable */
             strcpy(instructionTable[IC], binRegister);
-            printf("direct register operand, added word:%s\n", binRegister);
         }
         /* direct addressing: x */
         else {
@@ -232,7 +222,6 @@ void addAdditionalWords(char* instructionLine) {
                     if (strcmp(externUsageTable[i].symbolName, operand1) == 0) {
                         /* found the symbol in the table, add the instruction number */
                         externUsageTable[i].locations[IC] = IC;
-                        printf("adding location:%d to symbol:%s\n", IC, operand1);
                         break;
                     }
                 }
@@ -241,7 +230,6 @@ void addAdditionalWords(char* instructionLine) {
                     strcpy(externUsageTable[i].symbolName, operand1);
                     externUsageTable[i].locations[0] = IC;
                     externUsageCount++;
-                    printf("adding extern name:%s\n", operand1);
                 }
 
                 binAddress[12] = '0';
@@ -252,7 +240,6 @@ void addAdditionalWords(char* instructionLine) {
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
-            printf("direct operand, added word:%s\n", binAddress);
         } 
         IC++;
     }
@@ -284,7 +271,6 @@ void addAdditionalWords(char* instructionLine) {
 
             /* add to instructionTable */
             strcpy(instructionTable[IC], binary);
-            printf("immediate operand, added word:%s\n", binary);
         }
 
         /* index addressing: arr[k]*/    
@@ -319,7 +305,6 @@ void addAdditionalWords(char* instructionLine) {
                     if (strcmp(externUsageTable[i].symbolName, arrayName) == 0) {
                         /* found the symbol in the table, add the instruction number */
                         externUsageTable[i].locations[IC] = IC;
-                        printf("adding location:%d to symbol:%s\n", IC, arrayName);
                         break;
                     }
                 }
@@ -328,7 +313,6 @@ void addAdditionalWords(char* instructionLine) {
                     strcpy(externUsageTable[i].symbolName, arrayName);
                     externUsageTable[i].locations[0] = IC;
                     externUsageCount++;
-                    printf("adding extern name:%s\n", arrayName);
                 }
 
                 binAddress[12] = '0';
@@ -339,7 +323,6 @@ void addAdditionalWords(char* instructionLine) {
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
-            printf("array index operand, added word 1/2:%s\n", binAddress);
             
             /* two words are added so adding the first here */
             IC++;
@@ -354,7 +337,6 @@ void addAdditionalWords(char* instructionLine) {
                 /* indexStr is not a number, get it from the symbol table */
                 value = findMDefine(indexStr);
             }
-            printf("index:%d\n", value);
             
             free(tempOperand2);
 
@@ -370,7 +352,6 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the index word to the instructionTable */
             strcpy(instructionTable[IC], binIndex);
-            printf("array index operand, added word 2/2:%s\n", binIndex);
         }
 
         /* direct register addressing: r4 */
@@ -394,7 +375,6 @@ void addAdditionalWords(char* instructionLine) {
 
             /* add the binary word to the instructionTable */
             strcpy(instructionTable[IC], binRegister);
-            printf("direct register operand, added word:%s\n", binRegister);
         }
         /* direct addressing: x */
         else {
@@ -420,7 +400,6 @@ void addAdditionalWords(char* instructionLine) {
                     if (strcmp(externUsageTable[i].symbolName, operand2) == 0) {
                         /* found the symbol in the table, add the instruction number */
                         externUsageTable[i].locations[IC] = IC;
-                        printf("adding location:%d to symbol:%s\n", IC, operand2);
                         break;
                     }
                 }
@@ -429,7 +408,6 @@ void addAdditionalWords(char* instructionLine) {
                     strcpy(externUsageTable[i].symbolName, operand2);
                     externUsageTable[i].locations[0] = IC;
                     externUsageCount++;
-                    printf("adding extern name:%s\n", operand2);
                 }
 
                 binAddress[12] = '0';
@@ -440,7 +418,6 @@ void addAdditionalWords(char* instructionLine) {
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
-            printf("direct operand, added word:%s\n", binAddress);
         } 
         IC++;
     }
@@ -449,19 +426,14 @@ void addAdditionalWords(char* instructionLine) {
 void scanAgainAndAddWords(FILE *file, Symbol *symbolTable) {
     char line[MAX_LINE_LENGTH];
 
-    printf("~~~~~~~~ SCOND SCAN! ~~~~~~~~\n");
-
     while (fgets(line, sizeof(line), file)) {
         char *colonPosition;
-        printf("\n------------------------\n");
-        printf("%s\n", line);
 
         if (line[0] == ';' || isWhiteLine(line)) {
             continue;
         }
 
         if (strncmp(line, ".extern", 7) == 0){
-            printf("extern line, ignoring\n");
             continue;
         }
         else if (strncmp(line, ".entry", 6) == 0) {
@@ -472,11 +444,9 @@ void scanAgainAndAddWords(FILE *file, Symbol *symbolTable) {
             /* changing the symbol identifier to entry */
             if (symbolIndex != -1) {
                 strcpy(symbolTable[symbolIndex].identifier, "entry");
-                printf("Changing symbol %s identifier to entry\n", symbolName);
             }
             continue;
         } else if (strncmp(line, ".define", 7) == 0) {
-            printf("define line, ignoring\n");
             continue;
         }
 
@@ -496,11 +466,11 @@ void scanAgainAndAddWords(FILE *file, Symbol *symbolTable) {
             /* skipping .data .string */
             /* .data */
             if (strlen(directiveStart) >= 6 && strncmp(directiveStart, ".data ", 6) == 0) {
-                printf("data directive, ignoring\n");
+                /* do nothing */
             }
             /* .string */
             else if (strlen(directiveStart) >= 8 && strncmp(directiveStart, ".string ", 8) == 0) {
-                printf("string directive, ignoring\n");
+                /* do nothing */
             }
             /* code */
             else {
@@ -514,9 +484,7 @@ void scanAgainAndAddWords(FILE *file, Symbol *symbolTable) {
         }
         /* independant operation */
         else {
-            printf("independant operation, adding words...\n");
             addAdditionalWords(line);
         }
     }
-    printAll();
 }
