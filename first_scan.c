@@ -99,6 +99,16 @@ void addInstructionFirstWord(char* instructionLine) {
     operand1 = parts.operand1;
     operand2 = parts.operand2;
 
+    /* switching roles */
+    if(operand2 == NULL && operand1 != NULL) {
+        operand2 = operand1;
+        operand1 = NULL;
+    }
+
+    /* remove leading spaces from both operands */
+    while(operand1 != NULL && isspace((unsigned char)*operand1)) operand1++;
+    while(operand2 != NULL && isspace((unsigned char)*operand2)) operand2++;
+
     printf("opname:%s | op1:%s | op2:%s\n", operation, operand1, operand2);
     
     /* iterate over the operations array checking operation validity */
@@ -136,7 +146,7 @@ void addInstructionFirstWord(char* instructionLine) {
             strcat(resultWord, "11");  
         /* direct addressing: x */
         else 
-            strcat(resultWord, "01"); 
+            strcat(resultWord, "01");       
     } else {
         /* operand1 is null */
         strcat(resultWord, "00");
@@ -303,11 +313,13 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                             
                     pointer = strtok(NULL, ",");
                 }
+
             }
                 
             /* String */
             else if (strlen(directiveStart) >= 8 && strncmp(directiveStart, ".string ", 8) == 0) {
                 char* pointer = strchr(directiveStart, '\"');
+                char zero[15] = "00000000000000";
 
                 strcpy(symbolIdentifier, "data");
                 symbolValue = dataCount; /* saving the data starting address */
@@ -339,6 +351,8 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                         exit(1);
                     }
                 }
+                addData(0);
+                strcpy(instructionTable[instructionCount++], zero);
             }
 
             
@@ -373,7 +387,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
         /* Check if the identifier of the symbol is "data" */
         if (strcmp(symbolTable[i].identifier, "data") == 0) {
             /* Add instructionCount + 100 to the value of the symbol */
-            symbolTable[i].value += instructionCount + 100;
+            symbolTable[i].value += instructionCount + 100 - dataCount;
         }
     }
     printAll();

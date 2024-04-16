@@ -7,6 +7,14 @@
 
 int findSymbol(char* symbolName) {
     int i;
+    int len;
+
+    /* remove newline at the end of symbolName */
+    len = strlen(symbolName);
+    if (len > 0 && symbolName[len-1] == '\n') {
+        symbolName[len-1] = '\0';
+    }
+
     for (i = 0; i < symbolCount; i++) {
         if (strcmp(symbolTable[i].name, symbolName) == 0) {
             return i;

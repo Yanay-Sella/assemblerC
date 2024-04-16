@@ -19,21 +19,75 @@ void addAdditionalWords(char* instructionLine) {
     operand1 = parts.operand1;
     operand2 = parts.operand2;
 
+    if(operand2 == NULL && operand1 != NULL) {
+        operand2 = operand1;
+        operand1 = NULL;
+    }
+    
+    /* remove leading spaces from both operands */
+    while(operand1 != NULL && isspace((unsigned char)*operand1)) operand1++;
+    while(operand2 != NULL && isspace((unsigned char)*operand2)) operand2++;
+
     printf("op1:%s  op2:%s\n", operand1, operand2);
 
-    /* ~~~ taking care of the source operand bits 5-4 ~~~ */
+    /* Check if both operands are registers */
+    if (operand1 != NULL && operand1[0] == 'r' && operand2 != NULL && operand2[0] == 'r') {
+        /* both operands are registers, add one word for both */
+        int reg1 = operand1[1];
+        int reg2 = operand2[1];
+        char binRegisters[15] = "00000000000000";
+        char binReg1Num[4];
+        char binReg2Num[4];
+        int i;
+
+        /* convert the registers numbers to a 3 bits binary */
+        for (i = 2; i >= 0; i--) {
+            binReg1Num[i] = (reg1 & 1) ? '1' : '0';
+            reg1 >>= 1;
+        }
+        for (i = 2; i >= 0; i--) {
+            binReg2Num[i] = (reg2 & 1) ? '1' : '0';
+            reg2 >>= 1;
+        }
+
+        binReg1Num[3] = '\0';
+        binReg2Num[3] = '\0';
+
+        binRegisters[13-7] = binReg1Num[0];
+        binRegisters[13-6] = binReg1Num[1];
+        binRegisters[13-5] = binReg1Num[2];
+        binRegisters[13-4] = binReg2Num[0];
+        binRegisters[13-3] = binReg2Num[1];
+        binRegisters[13-2] = binReg2Num[2];
+
+        binRegisters[14] = '\0'; /* null terminate the string */
+        /* add to instructionTable */
+        strcpy(instructionTable[IC], binRegisters);
+        printf("register operands, added word:%s\n", binRegisters);
+        IC++;
+        return; /* no additional checks needed */ 
+    }
+
+    /* ~~~~~~~~~~~~~ FIRST OPERAND ~~~~~~~~~~~~~ */
     if(operand1 != NULL) {
         /* immediate addressing #k */  
         if (operand1[0] == '#') {
-            /* TODO: check for mdefines variables if its not a nunber */
-            int num = atoi(operand1 + 1); /* get the number after the # */
+            /* Extract the value after the # */
+            char* valueStr = operand1 + 1;
+            int value;
             char binary[15];
             int i;
 
-            for (i = 11; i >= 0; i--) {
-                binary[i] = (num & 1) ? '1' : '0';
-                num >>= 1;
+            if (sscanf(valueStr, "%d", &value) != 1) {
+                /* valueStr is not a number, get it from the symbol table */
+                value = findMDefine(valueStr);
             }
+
+            for (i = 11; i >= 0; i--) {
+                binary[i] = (value & 1) ? '1' : '0';
+                value >>= 1;
+            }
+
             /* add ARE bits */
             binary[12] = '0';
             binary[13] = '0';
@@ -47,19 +101,20 @@ void addAdditionalWords(char* instructionLine) {
         /* index addressing: arr[k]*/    
         else if (strstr(operand1, "[") && strstr(operand1, "]")) {
             char* arrayName;
-            char* tempOperand = strdup(operand1); /* create a copy of operand1 to avoid modifying the original string */
+            char* tempOperand = strdup(operand1); /* create a copy of 1 to avoid modifying the original string */
+            char *tempOperand2 = strdup(operand1);
             int symbolIndex;
             int arrAddress;
             char binAddress[15];
-            char binIndex[15]; /* 14 bits plus null terminator */
             int i;
             char* indexStr;
-            int index;
+            char binIndex[15]; /* 14 bits plus null terminator */
+            int value;
 
             /* extract the array name */
             arrayName = strtok(tempOperand, "[");
             symbolIndex = findSymbol(arrayName);
-            arrAddress = symbolTable[symbolIndex].value - instructionCount - 100;
+            arrAddress = symbolTable[symbolIndex].value;
 
             /* convert the address to a 12 bits binary */
             for (i = 11; i >= 0; i--) {
@@ -69,32 +124,37 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the A,R,E bits for each case possilbe */
             if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '0';
-                binAddress[13] = '1';
-            } else {
                 binAddress[12] = '1';
                 binAddress[13] = '0';
+            } else {
+                binAddress[12] = '0';
+                binAddress[13] = '1';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
             printf("array index operand, added word 1/2:%s\n", binAddress);
             
-
             /* two words are added so adding the first here */
             IC++;
-
+            
             free(tempOperand);
 
             /* getting the index inside the square brackets [index] */
-            indexStr = strtok(NULL, "[");
-            indexStr = strtok(indexStr, "]");
-            /* convert the index to an integer */
-            index = atoi(indexStr);
+            indexStr = strtok(tempOperand2, "[");
+            indexStr = strtok(NULL, "]");
+            
+            if (sscanf(indexStr, "%d", &value) != 1) {
+                /* indexStr is not a number, get it from the symbol table */
+                value = findMDefine(indexStr);
+            }
+            printf("index:%d\n", value);
+            
+            free(tempOperand2);
 
             /* convert to binary... */
             for (i = 11; i >= 0; i--) {
-                binIndex[i] = (index & 1) ? '1' : '0';
-                index >>= 1;
+                binIndex[i] = (value & 1) ? '1' : '0';
+                value >>= 1;
             }
             /* append '00' to the end of the binary number */
             binIndex[12] = '0';
@@ -137,7 +197,7 @@ void addAdditionalWords(char* instructionLine) {
             int i;
 
             symbolIndex = findSymbol(operand1);
-            symbolAddress = symbolTable[symbolIndex].value - instructionCount - 100;
+            symbolAddress = symbolTable[symbolIndex].value;
             
 
             /* convert the address to a 12 bits binary */
@@ -148,35 +208,39 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the A,R,E bits for each case possilbe */
             if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '0';
-                binAddress[13] = '1';
-            } else {
                 binAddress[12] = '1';
                 binAddress[13] = '0';
+            } else {
+                binAddress[12] = '0';
+                binAddress[13] = '1';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
             printf("direct operand, added word:%s\n", binAddress);
         } 
         IC++;
-    } else {
-        /* operand1 is null */
-        /* do nothing... */
     }
 
-    /* ~~~~~~ second operand ~~~~~~ */
+    /* ~~~~~~~~~~~~~ SECOND OPERAND ~~~~~~~~~~~~~ */
     if(operand2 != NULL) {
         /* immediate addressing #k */  
         if (operand2[0] == '#') {
-            /* TODO: check for mdefines variables if its not a nunber */
-            int num = atoi(operand2 + 1); /* get the number after the # */
+            /* Extract the value after the # */
+            char* valueStr = operand2 + 1;
+            int value;
             char binary[15];
             int i;
 
-            for (i = 11; i >= 0; i--) {
-                binary[i] = (num & 1) ? '1' : '0';
-                num >>= 1;
+            if (sscanf(valueStr, "%d", &value) != 1) {
+                /* valueStr is not a number, get it from the symbol table */
+                value = findMDefine(valueStr);
             }
+
+            for (i = 11; i >= 0; i--) {
+                binary[i] = (value & 1) ? '1' : '0';
+                value >>= 1;
+            }
+            
             /* add ARE bits */
             binary[12] = '0';
             binary[13] = '0';
@@ -191,18 +255,19 @@ void addAdditionalWords(char* instructionLine) {
         else if (strstr(operand2, "[") && strstr(operand2, "]")) {
             char* arrayName;
             char* tempOperand = strdup(operand2); /* create a copy of operand2 to avoid modifying the original string */
+            char *tempOperand2 = strdup(operand2);
             int symbolIndex;
             int arrAddress;
             char binAddress[15];
             int i;
             char* indexStr;
-            int index;
             char binIndex[15]; /* 14 bits plus null terminator */
+            int value;
 
             /* extract the array name */
             arrayName = strtok(tempOperand, "[");
             symbolIndex = findSymbol(arrayName);
-            arrAddress = symbolTable[symbolIndex].value - instructionCount - 100;
+            arrAddress = symbolTable[symbolIndex].value;
 
             /* convert the address to a 12 bits binary */
             for (i = 11; i >= 0; i--) {
@@ -212,11 +277,11 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the A,R,E bits for each case possilbe */
             if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '0';
-                binAddress[13] = '1';
-            } else {
                 binAddress[12] = '1';
                 binAddress[13] = '0';
+            } else {
+                binAddress[12] = '0';
+                binAddress[13] = '1';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
@@ -224,21 +289,25 @@ void addAdditionalWords(char* instructionLine) {
             
             /* two words are added so adding the first here */
             IC++;
-
+            
             free(tempOperand);
 
-            /* extract the index */
-
             /* getting the index inside the square brackets [index] */
-            indexStr = strtok(NULL, "[");
-            indexStr = strtok(indexStr, "]");
-            /* convert the index to an integer */
-            index = atoi(indexStr);
+            indexStr = strtok(tempOperand2, "[");
+            indexStr = strtok(NULL, "]");
+            
+            if (sscanf(indexStr, "%d", &value) != 1) {
+                /* indexStr is not a number, get it from the symbol table */
+                value = findMDefine(indexStr);
+            }
+            printf("index:%d\n", value);
+            
+            free(tempOperand2);
 
             /* convert to binary... */
             for (i = 11; i >= 0; i--) {
-                binIndex[i] = (index & 1) ? '1' : '0';
-                index >>= 1;
+                binIndex[i] = (value & 1) ? '1' : '0';
+                value >>= 1;
             }
             /* append '00' to the end of the binary number */
             binIndex[12] = '0';
@@ -281,8 +350,7 @@ void addAdditionalWords(char* instructionLine) {
             int i;
 
             symbolIndex = findSymbol(operand2);
-            symbolAddress = symbolTable[symbolIndex].value - instructionCount - 100;
-            
+            symbolAddress = symbolTable[symbolIndex].value;
 
             /* convert the address to a 12 bits binary */
             for (i = 11; i >= 0; i--) {
@@ -292,20 +360,17 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the A,R,E bits for each case possilbe */
             if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '0';
-                binAddress[13] = '1';
-            } else {
                 binAddress[12] = '1';
                 binAddress[13] = '0';
+            } else {
+                binAddress[12] = '0';
+                binAddress[13] = '1';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
             printf("direct operand, added word:%s\n", binAddress);
         } 
         IC++;
-    } else {
-        /* operand2 is null */
-        /* do nothing... */
     }
 }
 
@@ -373,14 +438,12 @@ void scanAgainAndAddWords(FILE *file, Symbol *symbolTable) {
                 /* Skip any leading spaces or tabs */
                 instructionStart += strspn(instructionStart, " \t");
                 addAdditionalWords(instructionStart);
-                return;
             }
         }
         /* independant operation */
         else {
             printf("independant operation, adding words...\n");
             addAdditionalWords(line);
-            return;
         }
     }
     printAll();
