@@ -55,3 +55,13 @@ InstructionParts splitInstruction(char* instructionLine) {
 
     return parts;
 }
+
+int isWhiteLine(char *str) {
+    while (*str) {
+        if (!isspace((unsigned char)*str)) {
+            return 0;
+        }
+        str++;
+    }
+    return 1;
+}

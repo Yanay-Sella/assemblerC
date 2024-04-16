@@ -7,6 +7,7 @@
 #define MAX_SYMBOLS 4096
 #define MAX_INSTRUCTIONS 3996
 #define WORD_LENGTH 15
+#define MAX_USAGE 4096
 
 /* data integer array for .string and .data */
 extern int* dataArray;
@@ -54,8 +55,18 @@ typedef struct {
     char* operand2;
 } InstructionParts;
 
+typedef struct {
+    char symbolName[MAX_LINE_LENGTH]; /* symbol name, assuming max length of 30 */
+    int locations[MAX_USAGE]; /* array of instruction numbers where the symbol is used */
+} ExternUsage;
+ExternUsage externUsageTable[MAX_SYMBOLS];
+extern int externUsageCount;
+
+extern int isError;
+
 /* ~~~ common functions ~~~ */
 int findSymbol(char* symbolName);
 InstructionParts splitInstruction(char* instructionLine);
+int isWhiteLine(char *str);
 
 #endif

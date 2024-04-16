@@ -123,12 +123,30 @@ void addAdditionalWords(char* instructionLine) {
             }
 
             /* adding the A,R,E bits for each case possilbe */
-            if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '1';
-                binAddress[13] = '0';
-            } else {
+            if(strcmp(symbolTable[symbolIndex].identifier, "external") == 0){
+
+                /* add the current instruction number to the locations array for this symbol */
+                for (i = 0; i < externUsageCount; i++) {
+                    if (strcmp(externUsageTable[i].symbolName, arrayName) == 0) {
+                        /* found the symbol in the table, add the instruction number */
+                        externUsageTable[i].locations[IC] = IC;
+                        printf("adding location:%d to symbol:%s\n", IC, arrayName);
+                        break;
+                    }
+                }
+                if (i == externUsageCount) {
+                    /* didnt find the symbol in the table, add a new entry */
+                    strcpy(externUsageTable[i].symbolName, arrayName);
+                    externUsageTable[i].locations[0] = IC;
+                    externUsageCount++;
+                    printf("adding extern name:%s\n", arrayName);
+                }
+
                 binAddress[12] = '0';
                 binAddress[13] = '1';
+            } else {
+                binAddress[12] = '1';
+                binAddress[13] = '0';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
@@ -207,12 +225,30 @@ void addAdditionalWords(char* instructionLine) {
             }
 
             /* adding the A,R,E bits for each case possilbe */
-            if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '1';
-                binAddress[13] = '0';
-            } else {
+            if(strcmp(symbolTable[symbolIndex].identifier, "external") == 0){
+
+                /* add the current instruction number to the locations array for this symbol */
+                for (i = 0; i < externUsageCount; i++) {
+                    if (strcmp(externUsageTable[i].symbolName, operand1) == 0) {
+                        /* found the symbol in the table, add the instruction number */
+                        externUsageTable[i].locations[IC] = IC;
+                        printf("adding location:%d to symbol:%s\n", IC, operand1);
+                        break;
+                    }
+                }
+                if (i == externUsageCount) {
+                    /* didnt find the symbol in the table, add a new entry */
+                    strcpy(externUsageTable[i].symbolName, operand1);
+                    externUsageTable[i].locations[0] = IC;
+                    externUsageCount++;
+                    printf("adding extern name:%s\n", operand1);
+                }
+
                 binAddress[12] = '0';
                 binAddress[13] = '1';
+            } else {
+                binAddress[12] = '1';
+                binAddress[13] = '0';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
@@ -276,12 +312,30 @@ void addAdditionalWords(char* instructionLine) {
             }
 
             /* adding the A,R,E bits for each case possilbe */
-            if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '1';
-                binAddress[13] = '0';
-            } else {
+            if(strcmp(symbolTable[symbolIndex].identifier, "external") == 0){
+
+                /* add the current instruction number to the locations array for this symbol */
+                for (i = 0; i < externUsageCount; i++) {
+                    if (strcmp(externUsageTable[i].symbolName, arrayName) == 0) {
+                        /* found the symbol in the table, add the instruction number */
+                        externUsageTable[i].locations[IC] = IC;
+                        printf("adding location:%d to symbol:%s\n", IC, arrayName);
+                        break;
+                    }
+                }
+                if (i == externUsageCount) {
+                    /* didnt find the symbol in the table, add a new entry */
+                    strcpy(externUsageTable[i].symbolName, arrayName);
+                    externUsageTable[i].locations[0] = IC;
+                    externUsageCount++;
+                    printf("adding extern name:%s\n", arrayName);
+                }
+
                 binAddress[12] = '0';
                 binAddress[13] = '1';
+            } else {
+                binAddress[12] = '1';
+                binAddress[13] = '0';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
@@ -359,12 +413,30 @@ void addAdditionalWords(char* instructionLine) {
             }
 
             /* adding the A,R,E bits for each case possilbe */
-            if(strcmp(symbolTable[symbolIndex].identifier, "external")){
-                binAddress[12] = '1';
-                binAddress[13] = '0';
-            } else {
+            if(strcmp(symbolTable[symbolIndex].identifier, "external") == 0){
+
+                /* add the current instruction number to the locations array for this symbol */
+                for (i = 0; i < externUsageCount; i++) {
+                    if (strcmp(externUsageTable[i].symbolName, operand2) == 0) {
+                        /* found the symbol in the table, add the instruction number */
+                        externUsageTable[i].locations[IC] = IC;
+                        printf("adding location:%d to symbol:%s\n", IC, operand2);
+                        break;
+                    }
+                }
+                if (i == externUsageCount) {
+                    /* didnt find the symbol in the table, add a new entry */
+                    strcpy(externUsageTable[i].symbolName, operand2);
+                    externUsageTable[i].locations[0] = IC;
+                    externUsageCount++;
+                    printf("adding extern name:%s\n", operand2);
+                }
+
                 binAddress[12] = '0';
                 binAddress[13] = '1';
+            } else {
+                binAddress[12] = '1';
+                binAddress[13] = '0';
             }
             binAddress[14] = '\0'; /* null terminate the string */
             strcpy(instructionTable[IC], binAddress);
@@ -384,7 +456,7 @@ void scanAgainAndAddWords(FILE *file, Symbol *symbolTable) {
         printf("\n------------------------\n");
         printf("%s\n", line);
 
-        if (line[0] == ';') {
+        if (line[0] == ';' || isWhiteLine(line)) {
             continue;
         }
 

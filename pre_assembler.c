@@ -23,9 +23,6 @@ void free_macros(void) {
             free(macros[i].lines[j]); /* free the lines themsleves */
         }
         free(macros[i].lines); /* free the lines of the array */
-
-        /* TODO: check if I need this in case using a pointer in memory */
-        /* free(macros[i].name); */
     }
 }
 
@@ -62,7 +59,7 @@ void replace_macros(char *line, FILE *output_file) {
     if (fprintf(output_file, "%s\n", line) < 0) {
         fprintf(stderr, "ERROR: write to output file failed\n");
         printf("ERROR: write to output file failed\n");
-        exit(EXIT_FAILURE);
+        exit(1);
     }
 }
 
@@ -107,7 +104,7 @@ void expand_macros(FILE *input_file, FILE *output_file) {
             char **new_lines = realloc(current_macro->lines, (current_macro->num_lines + 1) * sizeof(char *));
             if (new_lines == NULL) {
                 printf("ERROR: memory allocation failed\n");
-                exit(EXIT_FAILURE);
+                exit(1);
             }
             current_macro->lines = new_lines;            
             /* add the line to the current macro that point to the array */

@@ -35,7 +35,7 @@ int findMDefine(char* symbolName) {
     }
     /* if the symbol was not found or its identifier is not "mdefine" */
     printf("Error: Symbol %s not found or not an mdefine.\n", symbolName);
-    exit(1);
+    isError = 1;
 }
 
 /* add data to the dataArray */
@@ -62,6 +62,7 @@ void addSymbol(char* symbolName, int symbolValue, char* symbolIdentifier) {
     entry symbols can be added with onflicts, and vice versa */
     if(symbolIndex >= 0 && strcmp(symbolTable[symbolIndex].identifier, "entry") != 0 && strcmp(symbolIdentifier, "entry") != 0){
         printf("Error: Symbol %s already defined.\n", symbolName);
+        isError = 1;
         return;
     }
 
@@ -175,14 +176,14 @@ void addInstructionFirstWord(char* instructionLine) {
     printf("word:%s\n", resultWord);
 
     /* handling errors */
-    /* TODO: check for other erros like brackets, correct register */
     if (!found) {
         printf("Error: Unknown operation-%s.\n", operation);
-        exit(1);
+        isError = 1;
     } else {
         /* check if there's enough space in the instructionTalbe */
         if (instructionCount + additionalWords >= MAX_INSTRUCTIONS) {
             printf("Error: Too many instructions.\n");
+            isError = 1;
             return;
         }
         /* add the resultWord to the instructionTable */
@@ -212,8 +213,6 @@ void printAll(void) {
     }
 }
 
-
-
 void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
     char line[MAX_LINE_LENGTH];
     int i;
@@ -229,7 +228,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
 
 
         printf("%s\tIC=%d\n", line, instructionCount);
-        if (line[0] == ';') {
+        if (line[0] == ';' || isWhiteLine(line)) {
             continue;
         }
 
@@ -329,7 +328,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                 /* skip to the first character after the " */
                 if (pointer == NULL) {
                     printf("Error: missing starting quote in .string directive\n");
-                    exit(1);
+                    isError = 1;
                 }
                 pointer++;  /* Skip past the opening quote */
 
@@ -348,7 +347,7 @@ void scanSymbolsAllocateWords(FILE *file, Symbol *symbolTable) {
                     pointer++;
                     if (*pointer == '\0') {
                         printf("Error: missing closing quote in .string directive\n");
-                        exit(1);
+                        isError = 1;
                     }
                 }
                 addData(0);
