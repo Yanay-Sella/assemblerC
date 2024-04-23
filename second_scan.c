@@ -161,7 +161,7 @@ void addAdditionalWords(char* instructionLine) {
             /* two words are added so adding the first here */
             IC++;
             
-            free(tempOperand);
+            
 
             /* getting the index inside the square brackets [index] */
             indexStr = strtok(tempOperand2, "[");
@@ -171,8 +171,6 @@ void addAdditionalWords(char* instructionLine) {
                 /* indexStr is not a number, get it from the symbol table */
                 value = findMDefine(indexStr);
             }
-            
-            free(tempOperand2);
 
             /* convert to binary... */
             for (i = 11; i >= 0; i--) {
@@ -186,6 +184,8 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the index word to the instructionTable */
             strcpy(instructionTable[IC], binIndex);
+            free(tempOperand);
+            free(tempOperand2);
         }
 
         /* direct register addressing: r4 */
@@ -299,18 +299,18 @@ void addAdditionalWords(char* instructionLine) {
             char binIndex[15]; /* 14 bits plus null terminator */
             int value;
 
-            tempOperand = malloc(strlen(operand1) + 1); /* allocate memory for the copy */
+            tempOperand = malloc(strlen(operand2) + 1); /* allocate memory for the copy */
             if (tempOperand == NULL) {
                 printf("ERROR: memory allocation failed\n");
                 exit(1);
             }
-            tempOperand2 = malloc(strlen(operand1) + 1); /* allocate memory for the copy */
+            tempOperand2 = malloc(strlen(operand2) + 1); /* allocate memory for the copy */
             if (tempOperand2 == NULL) {
                 printf("ERROR: memory allocation failed\n");
                 exit(1);
             }
-            strcpy(tempOperand, operand1); /* copy the string */
-            strcpy(tempOperand2, operand1); /* copy the string */
+            strcpy(tempOperand, operand2); /* copy the string */
+            strcpy(tempOperand2, operand2); /* copy the string */
 
             /* extract the array name */
             arrayName = strtok(tempOperand, "[");
@@ -353,7 +353,7 @@ void addAdditionalWords(char* instructionLine) {
             /* two words are added so adding the first here */
             IC++;
             
-            free(tempOperand);
+            
 
             /* getting the index inside the square brackets [index] */
             indexStr = strtok(tempOperand2, "[");
@@ -363,8 +363,6 @@ void addAdditionalWords(char* instructionLine) {
                 /* indexStr is not a number, get it from the symbol table */
                 value = findMDefine(indexStr);
             }
-            
-            free(tempOperand2);
 
             /* convert to binary... */
             for (i = 11; i >= 0; i--) {
@@ -378,6 +376,8 @@ void addAdditionalWords(char* instructionLine) {
 
             /* adding the index word to the instructionTable */
             strcpy(instructionTable[IC], binIndex);
+            free(tempOperand);
+            free(tempOperand2);
         }
 
         /* direct register addressing: r4 */
