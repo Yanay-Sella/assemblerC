@@ -117,7 +117,6 @@ int main(int argc, char *argv[]) {
     }
     createEntryFile(entFileName);
     createExternFile(extFileName);
-    free(copy_input_filename);
 
     return 0;
 }

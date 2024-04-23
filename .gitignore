@@ -2,3 +2,5 @@
 *.as
 *.am
 *.ext
+*.ob
+*.ent

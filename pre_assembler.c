@@ -103,13 +103,18 @@ void expand_macros(FILE *input_file, FILE *output_file) {
                 printf("ERROR: memory allocation failed\n");
                 exit(1);
             }
-            current_macro->lines = new_lines;            
-            /* add the line to the current macro that point to the array */
-            /* strdup also allocates memory which should be freed */
-            current_macro->lines[current_macro->num_lines++] = strdup(line);
+            current_macro->lines = new_lines;
+            current_macro->lines[current_macro->num_lines] = malloc(strlen(line) + 1);
+            if (current_macro->lines[current_macro->num_lines] == NULL) {
+                printf("ERROR: memory allocation failed\n");
+                exit(1);
+            }
+            strcpy(current_macro->lines[current_macro->num_lines], line);
+            current_macro->num_lines++;
         } else {
             /* replace the macros or write original line */
             replace_macros(line, output_file);
         }
     }
+    free_macros();
 }

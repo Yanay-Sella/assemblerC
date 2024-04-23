@@ -97,8 +97,6 @@ void addAdditionalWords(char* instructionLine) {
         /* index addressing: arr[k]*/    
         else if (strstr(operand1, "[") && strstr(operand1, "]")) {
             char* arrayName;
-            char* tempOperand = strdup(operand1); /* create a copy of 1 to avoid modifying the original string */
-            char *tempOperand2 = strdup(operand1);
             int symbolIndex;
             int arrAddress;
             char binAddress[15];
@@ -106,8 +104,23 @@ void addAdditionalWords(char* instructionLine) {
             char* indexStr;
             char binIndex[15]; /* 14 bits plus null terminator */
             int value;
+            char* tempOperand;
+            char* tempOperand2;
+            
+            tempOperand = malloc(strlen(operand1) + 1); /* allocate memory for the copy */
+            if (tempOperand == NULL) {
+                printf("ERROR: memory allocation failed\n");
+                exit(1);
+            }
+            tempOperand2 = malloc(strlen(operand1) + 1); /* allocate memory for the copy */
+            if (tempOperand2 == NULL) {
+                printf("ERROR: memory allocation failed\n");
+                exit(1);
+            }
+            strcpy(tempOperand2, operand1); /* copy the string */
 
             /* extract the array name */
+            strcpy(tempOperand, operand1); /* copy the string */
             arrayName = strtok(tempOperand, "[");
             symbolIndex = findSymbol(arrayName);
             arrAddress = symbolTable[symbolIndex].value;
