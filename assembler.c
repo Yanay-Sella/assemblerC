@@ -27,7 +27,13 @@ int main(int argc, char *argv[]) {
     char *obFileName;
     char *entFileName;
     char *extFileName;
-    char *copy_input_filename = strdup(argv[1]);
+
+    char *copy_input_filename = malloc(strlen(argv[1]) + 1);
+    if (copy_input_filename == NULL) {
+        fprintf(stderr, "Error: Failed to allocate memory\n");
+        exit(1);
+    }
+    memcpy(copy_input_filename, argv[1], strlen(argv[1]) + 1);
 
     /* allocating memory for data array and initializng dataArraySize to its size */
     dataArray = (int*) malloc(80 * sizeof(int));
@@ -35,7 +41,7 @@ int main(int argc, char *argv[]) {
 
     if (argc != 2) {
         printf("Usage: %s input_file.as\n", argv[0]);
-        return 1;
+        exit(1);
     }
 
     /* creating the string for the .am output file */
@@ -111,6 +117,7 @@ int main(int argc, char *argv[]) {
     }
     createEntryFile(entFileName);
     createExternFile(extFileName);
+    free(copy_input_filename);
 
     return 0;
 }
